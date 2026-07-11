@@ -205,7 +205,7 @@ export default function TicketDetail() {
             <div className="card-title"><Icon name="mail" /> מענה לפנייה - {CHANNEL[t.channel]?.label || 'תלמיד'}</div>
             <ReplyComposer channel={t.channel} kb={kb} sending={sending} onSend={send} editorApi={composerApi} />
             <div className="row" style={{ marginTop: 8 }}>
-              <span className="muted small">שליחה מיידית או מתוזמנת · המענה יישלח בערוץ המקורי.</span>
+              <span className="muted small">המענה יישלח בערוץ המקורי.</span>
             </div>
           </div>
 

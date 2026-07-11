@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 
+// Feature flag: scheduled email sending is hidden (buggy, deprioritized 2026-07).
+// All the scheduling code below + the outbox/dispatch-outbox backend are kept intact —
+// flip this to true to restore the "תזמון" UI. See also TicketDetail.send() (sendAt branch).
+const SCHEDULED_SEND_ENABLED = false
+
 // Rich-text email composer with attachments + immediate/scheduled send.
 // onSend({ html, text, files, sendAt }) → returns falsy to keep the composer as-is (e.g. error),
 //   truthy to clear it. sendAt null = send now, else ISO string.
@@ -85,27 +90,29 @@ export default function ReplyComposer({ onSend, sending, channel, kb = [], edito
           <span key={i} className="badge gray">{f.name} <span style={{ cursor: 'pointer', color: 'var(--err)' }} onClick={() => setFiles(fs => fs.filter((_, j) => j !== i))}>✕</span></span>
         ))}
         <div className="spacer" />
-        <div ref={schedRef} style={{ position: 'relative' }}>
-          <button className="btn ghost sm" onClick={() => setSchedOpen(o => !o)} disabled={sending}><Icon name="calendar" size={14} /> תזמון</button>
-          {schedOpen && (
-            <div className="pop" style={{ position: 'absolute', bottom: 44, insetInlineEnd: 0, width: 250, padding: 12, zIndex: 60 }}>
-              <div className="small" style={{ fontWeight: 700, marginBottom: 8 }}>מתי לשלוח?</div>
-              {presets().map(p => (
-                <button key={p.label} className="btn subtle sm block" style={{ marginBottom: 6, justifyContent: 'space-between' }}
-                  onClick={() => doSend(p.at.toISOString())}>
-                  <span>{p.label}</span>
-                  <span className="small muted">{p.at.toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                </button>
-              ))}
-              <div className="field" style={{ margin: '10px 0 0' }}>
-                <label className="small">תאריך ושעה מותאמים</label>
-                <input type="datetime-local" value={customAt} onChange={e => setCustomAt(e.target.value)} dir="ltr" />
+        {SCHEDULED_SEND_ENABLED && (
+          <div ref={schedRef} style={{ position: 'relative' }}>
+            <button className="btn ghost sm" onClick={() => setSchedOpen(o => !o)} disabled={sending}><Icon name="calendar" size={14} /> תזמון</button>
+            {schedOpen && (
+              <div className="pop" style={{ position: 'absolute', bottom: 44, insetInlineEnd: 0, width: 250, padding: 12, zIndex: 60 }}>
+                <div className="small" style={{ fontWeight: 700, marginBottom: 8 }}>מתי לשלוח?</div>
+                {presets().map(p => (
+                  <button key={p.label} className="btn subtle sm block" style={{ marginBottom: 6, justifyContent: 'space-between' }}
+                    onClick={() => doSend(p.at.toISOString())}>
+                    <span>{p.label}</span>
+                    <span className="small muted">{p.at.toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  </button>
+                ))}
+                <div className="field" style={{ margin: '10px 0 0' }}>
+                  <label className="small">תאריך ושעה מותאמים</label>
+                  <input type="datetime-local" value={customAt} onChange={e => setCustomAt(e.target.value)} dir="ltr" />
+                </div>
+                <button className="btn sm block" style={{ marginTop: 8 }} disabled={!customAt} onClick={() => doSend(new Date(customAt).toISOString())}>תזמן שליחה</button>
               </div>
-              <button className="btn sm block" style={{ marginTop: 8 }} disabled={!customAt} onClick={() => doSend(new Date(customAt).toISOString())}>תזמן שליחה</button>
-            </div>
-          )}
-        </div>
-        <button className="btn" disabled={sending} onClick={() => doSend(null)}>{sending ? <span className="spinner light" style={{ width: 16, height: 16 }} /> : 'שלח עכשיו'}</button>
+            )}
+          </div>
+        )}
+        <button className="btn" disabled={sending} onClick={() => doSend(null)}>{sending ? <span className="spinner light" style={{ width: 16, height: 16 }} /> : (SCHEDULED_SEND_ENABLED ? 'שלח עכשיו' : 'שלח')}</button>
       </div>
     </div>
   )
