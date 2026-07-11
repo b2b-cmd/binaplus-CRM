@@ -75,7 +75,7 @@ export default function Attendance() {
                   <td className="small">{r.lesson?.module?.name || '-'}</td>
                   <td>{r.cycle?.name ? <span className="badge" style={chipColor(r.cycle.name)}>{r.cycle.name}</span> : '-'}</td>
                   <td><button className={`badge ${r.present ? 'ok' : 'err'}`} style={{ border: 'none', cursor: 'pointer' }} onClick={() => toggle(r, 'present')}>{r.present ? '✓ נוכח/ה' : '✗ חסר/ה'}</button></td>
-                  <td>{r.present ? <span className="muted small">—</span> : <button className={`badge ${r.approved ? 'ok' : 'warn'}`} style={{ border: 'none', cursor: 'pointer' }} onClick={() => toggle(r, 'approved')}>{r.approved ? 'מאושר' : 'לא מאושר'}</button>}</td>
+                  <td>{r.present ? <span className="muted small">-</span> : <button className={`badge ${r.approved ? 'ok' : 'warn'}`} style={{ border: 'none', cursor: 'pointer' }} onClick={() => toggle(r, 'approved')}>{r.approved ? 'מאושר' : 'לא מאושר'}</button>}</td>
                   <td><EditableCell row={r} table="attendance" field="notes" mode="text" onSaved={patch(r.id)} /></td>
                   <td className="small muted" style={{ whiteSpace: 'nowrap' }}>{new Date(r.created_at).toLocaleDateString('he-IL')}</td>
                   <td><button className="btn subtle sm" style={{ color: 'var(--err)', padding: '4px 7px' }} onClick={() => del(r)}><Icon name="trash" size={13} /></button></td>

@@ -11,15 +11,16 @@ function sanitize(html) {
 }
 
 // Full email-style card for an email thread message (in or out).
-export default function EmailMessage({ m }) {
+export default function EmailMessage({ m, subject }) {
   const out = m.direction === 'out'
   const atts = Array.isArray(m.attachments) ? m.attachments : []
+  const subj = m.email_subject || subject
   return (
     <div style={{ border: '1px solid var(--border-soft)', borderRadius: 'var(--r)', overflow: 'hidden', background: 'var(--surface)', boxShadow: 'var(--sh1)' }}>
       <div style={{ background: out ? 'var(--xlp)' : 'var(--surface-2)', padding: '10px 14px', borderBottom: '1px solid var(--border-soft)' }}>
         <div className="row" style={{ gap: 8 }}>
           <span className="badge mp" style={{ fontSize: '0.66rem' }}><Icon name="mail" size={11} /> {out ? 'נשלח' : 'התקבל'}</span>
-          {m.email_subject && <b style={{ fontSize: '0.92rem' }}>{m.email_subject}</b>}
+          <b style={{ fontSize: '0.92rem' }}>{subj || '(ללא נושא)'}</b>
           <div className="spacer" />
           <span className="small muted" style={{ whiteSpace: 'nowrap' }}>{new Date(m.received_at || m.created_at).toLocaleString('he-IL')}</span>
         </div>

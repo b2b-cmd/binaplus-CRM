@@ -129,7 +129,7 @@ export default function LessonDetail() {
                           {!a.present
                             ? <button className={`badge ${a.approved ? 'ok' : 'warn'}`} style={{ border: 'none', cursor: 'pointer' }}
                                 onClick={() => setA(p.id, { approved: !a.approved })}>{a.approved ? 'מאושר' : 'לא מאושר'}</button>
-                            : <span className="muted small">—</span>}
+                            : <span className="muted small">-</span>}
                         </td>
                         <td><input className="input" style={{ padding: '5px 8px', fontSize: '0.85rem' }} value={a.notes || ''} placeholder="הערה…" onChange={e => setA(p.id, { notes: e.target.value })} /></td>
                       </tr>

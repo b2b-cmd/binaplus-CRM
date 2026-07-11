@@ -27,6 +27,7 @@ import Attendance from './pages/Attendance'
 import Knowledge from './pages/Knowledge'
 import Tasks from './pages/Tasks'
 import Reps from './pages/Reps'
+import RepDetail from './pages/RepDetail'
 import Duplicates from './pages/Duplicates'
 import Guide from './pages/Guide'
 import Settings from './pages/Settings'
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="guide" element={<Guide />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="reps" element={<Reps />} />
+          <Route path="reps/:id" element={<RepDetail />} />
           <Route path="duplicates" element={<Duplicates />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" />} />

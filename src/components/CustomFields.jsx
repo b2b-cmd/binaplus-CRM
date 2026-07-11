@@ -8,7 +8,7 @@ import Icon from './Icon'
 const EMPTY = { label: '', key: '', type: 'text', options: '', width: 1 }
 
 // Custom fields for a record: renders values (everyone) + lets managers define/position
-// fields (add/delete/width/reorder) directly from the record screen — no Settings trip.
+// fields (add/delete/width/reorder) directly from the record screen - no Settings trip.
 export default function CustomFields({ objectType, recordId, table }) {
   const isManager = useAuthStore(s => s.isManager)()
   const [defs, setDefs] = useState([])
@@ -61,7 +61,7 @@ export default function CustomFields({ objectType, recordId, table }) {
         </>}
       </div>
 
-      {defs.length === 0 ? <div className="empty small">אין שדות מותאמים{isManager ? ' — הוסיפו בעזרת "ניהול שדות"' : ''}</div> : (
+      {defs.length === 0 ? <div className="empty small">אין שדות מותאמים{isManager ? ' - הוסיפו בעזרת "ניהול שדות"' : ''}</div> : (
         <div className="field-grid">
           {defs.map((d, i) => (
             <div key={d.id} style={{ gridColumn: d.width === 2 ? '1 / -1' : 'auto', position: 'relative' }}>

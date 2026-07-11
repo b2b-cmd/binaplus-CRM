@@ -1,12 +1,12 @@
 // ============================================================
-// Central object registry — drives the generic create modal,
+// Central object registry - drives the generic create modal,
 // dynamic related-record creation, and record deletion.
 // A new screen with an FK to an existing record gets create/link
 // behaviour for free by adding an entry (and a relation on the parent).
 // ============================================================
 import {
   URGENCY, TICKET_TYPES, TRAINING_TYPES, OPP_STATUS, ORDER_STATUS,
-  PAYMENT_TYPES, SALES_STATUS_META,
+  PAYMENT_TYPES, SALES_STATUS_META, PERMISSION_LEVELS, USER_TYPES,
 } from './constants'
 
 const enumOpts = (obj) => Object.entries(obj).map(([value, v]) => ({ value, label: v.label || v }))
@@ -139,6 +139,18 @@ export const SCHEMA = {
       { key: 'presentation_url', label: 'לינק מצגת', type: 'text', ltr: true },
       { key: 'homework', label: 'שיעורי בית', type: 'textarea' },
       { key: 'lecturer', label: 'מרצה', type: 'select', optionsFrom: 'reps' },
+    ],
+    relations: [],
+  },
+  rep: {
+    table: 'users', labelOne: 'נציג', labelMany: 'נציגים', icon: 'shield',
+    listPath: '/reps', detailPath: (id) => `/reps/${id}`, softDelete: false, deactivate: true, titleField: 'full_name',
+    fields: [
+      { key: 'full_name', label: 'שם מלא', type: 'text', required: true },
+      { key: 'phone', label: 'טלפון', type: 'text', ltr: true },
+      { key: 'email', label: 'מייל', type: 'text', ltr: true },
+      { key: 'permission_level', label: 'הרשאה', type: 'select', options: Object.entries(PERMISSION_LEVELS).map(([value, label]) => ({ value, label })), default: 'user' },
+      { key: 'user_type', label: 'סוג משתמש', type: 'select', options: Object.entries(USER_TYPES).map(([value, label]) => ({ value, label })), default: 'service' },
     ],
     relations: [],
   },

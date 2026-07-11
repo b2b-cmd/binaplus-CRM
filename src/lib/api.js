@@ -7,7 +7,7 @@ export async function updateField(table, row, field, newValue) {
   const rep = useAuthStore.getState().rep
   const old = row[field]
   let { error } = await supabase.from(table).update({ [field]: newValue, updated_at: new Date().toISOString() }).eq('id', row.id)
-  // Some tables have no updated_at column — retry without it rather than failing the save.
+  // Some tables have no updated_at column - retry without it rather than failing the save.
   if (error && /updated_at/.test(error.message || '')) {
     ({ error } = await supabase.from(table).update({ [field]: newValue }).eq('id', row.id))
   }

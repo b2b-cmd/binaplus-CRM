@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 const FUNCTIONS_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co')
 
 // Sends an outgoing email reply via the email-send edge function (→ Apps Script → Gmail).
-// attachments: [{ name, url }] — public URLs (Supabase storage) attached to the email.
+// attachments: [{ name, url }] - public URLs (Supabase storage) attached to the email.
 export async function sendEmailReply({ to, subject, body, htmlBody, threadId, attachments = [] }) {
   const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch(`${FUNCTIONS_URL}/email-send`, {

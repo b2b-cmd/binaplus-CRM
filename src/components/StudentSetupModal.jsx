@@ -8,7 +8,7 @@ import { useAuthStore } from '../stores/authStore'
 import Modal from './Modal'
 import Icon from './Icon'
 
-// In-system "הקמת תלמיד" — models the external new-student form but writes real
+// In-system "הקמת תלמיד" - models the external new-student form but writes real
 // linked records: people(active) → opportunity(won) → order → payment(s) + financing.
 // Does NOT touch the external bina-plus.co.il/new-student form.
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -47,7 +47,7 @@ export default function StudentSetupModal({ person, onClose, onDone }) {
         agreement_status: f.agreement ? 'חתום' : (person.agreement_status || null),
       }).eq('id', person.id)
 
-      // 2) opportunity: reuse an open one, else create — mark won
+      // 2) opportunity: reuse an open one, else create - mark won
       const prodName = opts.products.find(p => p.id === f.product_id)?.name
       let oppId
       const { data: openOpp } = await supabase.from('opportunities').select('id').eq('person_id', person.id).is('deleted_at', null).neq('status', 'lost').order('created_at', { ascending: false }).limit(1)
@@ -83,7 +83,7 @@ export default function StudentSetupModal({ person, onClose, onDone }) {
   }
 
   return (
-    <Modal title={`הקמת תלמיד — ${person.full_name}`} icon="user-plus" onClose={onClose} maxWidth={640}>
+    <Modal title={`הקמת תלמיד - ${person.full_name}`} icon="user-plus" onClose={onClose} maxWidth={640}>
       <div className="muted small" style={{ marginTop: -6, marginBottom: 12 }}>
         {[person.phone, person.email].filter(Boolean).join(' · ') || 'ליד ללא פרטי קשר'}
       </div>
