@@ -7,6 +7,24 @@
 | F3 | Frontend | MED | Tasks/ActivityFeed | hardcoded light colors (#fff8e6/#fdecec) break dark theme | use CSS vars + dark overrides | ✅ fixed |
 | F4 | Frontend | HIGH | PersonDetail/Opportunities/Orders | RecordLayout refactor dropped add-order/add-opportunity → **no way to create orders/opps in UI** | quick-add 🎯/📄 actions on person card (linked+navigate) | ✅ fixed |
 
+## Phase 1 batch (9 fixes) — branch `fix/phase-1`, 2026-07-11
+
+| # | Area | Finding / Task | Fix | Status |
+|---|------|----------------|-----|--------|
+| P1 | records CSS | attendance matrix inflated its `.rec-grid` column and pushed the activity feed off-screen (grid children default `min-width:auto`) | `.rec-grid > * { min-width: 0 }` so `.table-wrap` scrolls internally | ✅ (feed present + table-wraps scroll; no console errors) |
+| P7 | reps | `/reps` was `1fr 320px` sticky form, no record screen | rewrote to full-width list (search+filters+`+נציג חדש` modal) + new `RepDetail` (KPIs, editable fields, related chips) + `reps/:id` route + `rep` schema (deactivate, no hard-delete) | ✅ (list, nav, RepDetail, deactivate button all verified live) |
+| P8 | products | products got static `badge mp`, no per-product color | reuse `chipColor(name)` across Products/People/Cycles/Lessons/Dashboard; palette 9→15 | ✅ (distinct inline colors verified in DOM) |
+| P2/3/4/5 | fields (light) | couldn't edit an existing custom field's label or dropdown options (only delete+recreate) | inline edit (pencil) for label + select options on the record screen; standard fields stay code-driven (chosen light scope) | ✅ (build; component renders) |
+| P6 | activity feed | composer/note/task/email read as raw HTML boxes | token-only premium restyle (cards, `var(--r)`+`var(--sh1)`, 34–36px targets, focus-within, gradient active preset) — dark-safe | ✅ (renders, no errors; pixel look not measurable headless) |
+| P9 | lessons | `lecturer` was free-text; should be M2M to users | migration **014** `lesson_lecturers` (applied to live DB) + `מרצים מקושרים` toggle-chip block + Lessons/ModuleDetail show linked names | ✅ (toggle→DB persistence verified end-to-end) |
+| P9-data | lessons | migration seeded **0** links: DB has 2 users but 36 lessons carry informal free-text lecturers (מור, אליאל, משותף) that aren't users | kept free-text `מרצה (שם חופשי)` alongside the M2M block (hybrid) so no info is lost | ✅ documented |
+
+**QA env note:** DOM/accessibility snapshots, interactions, and live-DB checks all passed with **zero console errors** across Dashboard/Reps/RepDetail/Lessons/LessonDetail/Cycles/CycleDetail. Pixel-level visual verification (screenshot, `innerWidth`) was **not possible** — the headless preview reports `innerWidth:0` and screenshots time out; visual polish (P1 feed position under wide tables, P6 composer look, P8 colors) is verified by DOM structure + code, not by a rendered image.
+
+**Concurrency note:** a second Claude session worked the same worktree/branch during this batch and swept the P7 changes into its unrelated commit `da07170` (per user direction to continue on the shared branch).
+
+**Not yet done:** global click-through of every route; deploy to production (both pending your approval).
+
 ## Verified working (frontend sweep — zero console errors on all 14 routes)
 - All routes render; dark theme readable (dark bg + light text verified).
 - Person card: related chips (expand+open), stage bar, section tabs, editable fields, custom fields render.
