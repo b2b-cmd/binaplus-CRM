@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
-import { TICKET_STATUS_OPEN, TICKET_STATUS, URGENCY, SALES_STATUS_META } from '../lib/constants'
+import { TICKET_STATUS_OPEN, TICKET_STATUS, URGENCY, SALES_STATUS_META, chipColor } from '../lib/constants'
 import Icon from '../components/Icon'
 
 function Kpi({ label, value, sub, icon }) {
@@ -115,7 +115,7 @@ export default function Dashboard() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16, marginTop: 16 }}>
             <Breakdown title="לפי סטטוס מכירתי" icon="filter" data={Object.entries(sales.byStatus).map(([k, v]) => [SALES_STATUS_META[k]?.label || k, v])} />
             <Breakdown title="הכנסה לפי מחזור" icon="calendar" money data={Object.entries(sales.revByCycle).sort((a, b) => b[1] - a[1])} />
-            <Breakdown title="הכנסה לפי מוצר" icon="grid" money data={Object.entries(sales.revByProduct).sort((a, b) => b[1] - a[1])} />
+            <Breakdown title="הכנסה לפי מוצר" icon="grid" money colorize data={Object.entries(sales.revByProduct).sort((a, b) => b[1] - a[1])} />
             <Breakdown title="לפי מקור הגעה" icon="tag" data={Object.entries(sales.bySource).sort((a, b) => b[1] - a[1])} />
             <Breakdown title="הכנסה לפי נציג" icon="users" money data={Object.entries(sales.revByRep).sort((a, b) => b[1] - a[1])} />
           </div>
@@ -128,7 +128,7 @@ export default function Dashboard() {
 function Sel({ label, v, on, opts }) {
   return <div className="field" style={{ margin: 0 }}><label>{label}</label><select value={v} onChange={e => on(e.target.value)}><option value="">הכול</option>{opts.map(([val, l]) => <option key={val} value={val}>{l}</option>)}</select></div>
 }
-function Breakdown({ title, icon, data, money }) {
+function Breakdown({ title, icon, data, money, colorize }) {
   const max = Math.max(1, ...data.map(d => d[1]))
   return (
     <div className="card">
@@ -137,8 +137,8 @@ function Breakdown({ title, icon, data, money }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {data.slice(0, 8).map(([k, v]) => (
             <div key={k}>
-              <div className="row small" style={{ justifyContent: 'space-between' }}><span>{k}</span><b>{money ? `₪${Math.round(v).toLocaleString()}` : v}</b></div>
-              <div style={{ height: 6, background: 'var(--xlp)', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: `${100 * v / max}%`, height: '100%', background: 'var(--g2)' }} /></div>
+              <div className="row small" style={{ justifyContent: 'space-between' }}><span>{colorize ? <span className="badge" style={chipColor(k)}>{k}</span> : k}</span><b>{money ? `₪${Math.round(v).toLocaleString()}` : v}</b></div>
+              <div style={{ height: 6, background: 'var(--xlp)', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: `${100 * v / max}%`, height: '100%', background: colorize ? chipColor(k).color : 'var(--g2)' }} /></div>
             </div>
           ))}
         </div>

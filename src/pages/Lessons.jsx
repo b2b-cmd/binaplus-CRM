@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { chipColor } from '../lib/constants'
 import Icon from '../components/Icon'
 
 const TYPE_BADGE = { 'חברתי': 'mp', 'העברת ידע': 'info', 'תרגול פרקטי': 'ok' }
@@ -34,7 +35,7 @@ export default function Lessons() {
   return (
     <div>
       <div className="toolbar">
-        {products.map(p => <button key={p.id} className={`chip ${product === p.id ? 'active' : ''}`} onClick={() => setProduct(p.id)}>{p.name}</button>)}
+        {products.map(p => <button key={p.id} className={`chip ${product === p.id ? 'active' : ''}`} onClick={() => setProduct(p.id)}><span style={{ width: 8, height: 8, borderRadius: 8, background: chipColor(p.name).color, display: 'inline-block', marginInlineEnd: 6 }} />{p.name}</button>)}
         <div className="spacer" />
         <div style={{ position: 'relative' }}>
           <Icon name="search" size={16} style={{ position: 'absolute', insetInlineStart: 10, top: 10, color: 'var(--text-3)' }} />

@@ -48,7 +48,7 @@ export default function Cycles() {
   const productOpts = products.map(p => ({ value: p.id, label: p.name }))
   const COLS = {
     name: { label: 'מחזור', sort: c => c.name, get: c => <EditableCell row={c} table="cycles" field="name" mode="text" display={v => <span className="badge" style={chipColor(v || '')}>{v}</span>} onSaved={patch(c.id)} /> },
-    product: { label: 'מוצר', sort: c => c.product?.name, get: c => <EditableCell row={c} table="cycles" field="product_id" mode="select" options={productOpts} display={() => c.product?.name || '-'} onSaved={patch(c.id)} /> },
+    product: { label: 'מוצר', sort: c => c.product?.name, get: c => <EditableCell row={c} table="cycles" field="product_id" mode="select" options={productOpts} display={() => { const n = c.product?.name; return n ? <span className="badge" style={chipColor(n)}>{n}</span> : '-' }} onSaved={patch(c.id)} /> },
     lecturer: { label: 'מרצה', sort: c => c.lecturer_name, get: c => <EditableCell row={c} table="cycles" field="lecturer_name" mode="text" onSaved={patch(c.id)} /> },
     start_date: { label: 'התחלה', sort: c => c.start_date, get: c => <EditableCell row={c} table="cycles" field="start_date" mode="text" display={v => v ? new Date(v).toLocaleDateString('he-IL') : '-'} onSaved={patch(c.id)} /> },
     reg: { label: 'רשומים', sort: c => st(c).reg, get: c => <span style={{ fontWeight: 700 }}>{st(c).reg}</span> },

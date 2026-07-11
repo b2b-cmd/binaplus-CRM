@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
+import { chipColor } from '../lib/constants'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
 
@@ -38,7 +39,7 @@ export default function Products() {
               const patch = (field, value) => setItems(xs => xs.map(x => x.id === it.id ? { ...x, [field]: value } : x))
               return (
               <tr key={it.id} className="clickable" onClick={() => nav(`/products/${it.id}`)}>
-                <td style={{ fontWeight: 700 }}><EditableCell row={it} table="products" field="name" mode="text" onSaved={patch} /></td>
+                <td style={{ fontWeight: 700 }}><EditableCell row={it} table="products" field="name" mode="text" display={v => v ? <span className="badge" style={chipColor(v)}>{v}</span> : '-'} onSaved={patch} /></td>
                 <td><EditableCell row={it} table="products" field="type" mode="select" options={TYPES.map(t => ({ value: t, label: t }))} display={v => v ? <span className="badge mp">{v}</span> : '-'} onSaved={patch} /></td>
                 <td className="small"><EditableCell row={it} table="products" field="price_before_vat" mode="text" display={money} onSaved={patch} /></td>
                 <td className="small"><EditableCell row={it} table="products" field="price_after_vat" mode="text" display={money} onSaved={patch} /></td>
