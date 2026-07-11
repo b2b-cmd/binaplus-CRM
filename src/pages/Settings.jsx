@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
 import RecordFormModal from '../components/RecordFormModal'
+import ApiDocs from '../components/ApiDocs'
 import Icon from '../components/Icon'
 
 export default function Settings() {
@@ -147,7 +148,7 @@ function ApiBackupTab() {
             ))}</div>
           )}
         </div>
-        <ApiDocsCard base={FUNCTIONS} />
+        <ApiDocs base={FUNCTIONS} keys={keys} />
       </div>
     </div>
   )
