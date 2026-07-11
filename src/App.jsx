@@ -31,6 +31,7 @@ import RepDetail from './pages/RepDetail'
 import Duplicates from './pages/Duplicates'
 import Guide from './pages/Guide'
 import Settings from './pages/Settings'
+import ApiDocsPage from './pages/ApiDocsPage'
 
 function Loading() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="reps/:id" element={<RepDetail />} />
           <Route path="duplicates" element={<Duplicates />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="api-docs" element={<ApiDocsPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       </Routes>

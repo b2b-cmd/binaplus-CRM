@@ -95,7 +95,7 @@ export default function ApiDocs({ base, keys = [] }) {
 
       {/* operations */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {OPS.map(op => <Operation key={op.id} op={op} resource={resource} url={url} keys={activeKeys} />)}
+        {OPS.map(op => <Operation key={`${op.id}-${resource}`} op={op} resource={resource} url={url} keys={activeKeys} />)}
       </div>
 
       {/* field reference */}

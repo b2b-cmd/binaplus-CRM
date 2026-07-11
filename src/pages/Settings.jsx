@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
 import RecordFormModal from '../components/RecordFormModal'
-import ApiDocs from '../components/ApiDocs'
 import Icon from '../components/Icon'
 
 export default function Settings() {
@@ -148,7 +147,11 @@ function ApiBackupTab() {
             ))}</div>
           )}
         </div>
-        <ApiDocs base={FUNCTIONS} keys={keys} />
+        <div className="card">
+          <div className="card-title"><Icon name="book" /> דוקומנטציית API</div>
+          <div className="small muted" style={{ marginBottom: 10 }}>המדריך המלא (יצירה · עדכון · חיפוש עם פילטרים · מחיקה) עם "נסה עכשיו" חי — בדף ייעודי.</div>
+          <a className="btn sm" href="#/api-docs"><Icon name="book" size={14} /> פתח דוקומנטציית API</a>
+        </div>
       </div>
     </div>
   )
