@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+*.log
+.DS_Store
+
+# scratch/build artifacts
+scripts/code-b64.txt
+scripts/logo-preview*.png
+*.bak
