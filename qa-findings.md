@@ -25,6 +25,17 @@
 
 **Not yet done:** global click-through of every route; deploy to production (both pending your approval).
 
+## Follow-up batch — scheduled emails + public API (2026-07-11)
+
+| # | Area | Change | Verification |
+|---|------|--------|--------------|
+| S1 | email | Scheduled-email sending **hidden** behind `SCHEDULED_SEND_ENABLED=false` (ReplyComposer) — buggy/deprioritized. Backend (outbox + dispatch-outbox) left intact = restorable. TicketDetail hint updated. | ✅ live: no "תזמון" button, send="שלח", no scheduling hint, 0 console errors |
+| S1-data | email | 1 pending test scheduled email (`Re: בדיקה` → sahar@, due 07-12 06:00) marked `canceled` in `outbox` so it won't fire | ✅ |
+| S2 | public-api | Edge Function extended: **DELETE** (soft-delete via `deleted_at`; `?hard=true` permanent) + **GET filters** (`q`, exact-match cols, `from`/`to`, `limit`, `include_deleted`); list excludes soft-deleted. Deployed to prod. | ✅ live CRUD+filters verified for leads & tickets; prod 401+remediation on missing key |
+| S3 | docs UI | New `ApiDocs` component (Settings → API): Swagger-like per-resource operation cards (search/get/create/update/delete) with method badges, field + filter tables, cURL, and a live "try it" console | ✅ renders (4 methods, 2 resources); in-UI "try it" GET → HTTP 200 + real data |
+
+Deployed to prod `bina-plus.co.il/app` (build `index-C0Nf7EqF.js`) + `public-api` Edge Function.
+
 ## Verified working (frontend sweep — zero console errors on all 14 routes)
 - All routes render; dark theme readable (dark bg + light text verified).
 - Person card: related chips (expand+open), stage bar, section tabs, editable fields, custom fields render.
