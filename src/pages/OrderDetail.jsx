@@ -28,7 +28,11 @@ export default function OrderDetail() {
     setPayments(pays || []); setOpts(oo); setLoading(false)
   }
   useEffect(() => { load() }, [id])
-  const save = (field, value) => { setO(x => ({ ...x, [field]: value })); updateField('orders', o, field, value) }
+  const save = (field, value) => {
+    setO(x => ({ ...x, [field]: value })); updateField('orders', o, field, value)
+    // the person's cycle follows the order (used for attendance grouping)
+    if (field === 'cycle_id' && value && o.person_id) supabase.from('people').update({ cycle_id: value }).eq('id', o.person_id).then(() => {}, () => {})
+  }
 
   const calc = useMemo(() => computeFinancing({ amountInclVat: parseFloat(pay.amount) || 0, paymentType: pay.payment_type, numPayments: parseInt(pay.num_payments) || 1 }), [pay])
   const addPayment = async () => {

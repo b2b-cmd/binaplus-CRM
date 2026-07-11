@@ -114,7 +114,6 @@ export default function PersonDetail() {
         {sec === 'מכירה' && <div className="field-grid">
           <EditField label="סטטוס מכירתי" value={p.sales_status} display={SALES_STATUS_META[p.sales_status]?.label} type="select" options={salesOpts} onSave={v => save('sales_status', v)} />
           <EditField label="מוצר" value={p.product_id} display={p.product?.name} type="select" options={productOpts} onSave={v => save('product_id', v)} />
-          <EditField label="מחזור" value={p.cycle_id} display={p.cycle?.name} type="select" options={cycleOpts} onSave={v => save('cycle_id', v)} />
           <EditField label="סטטוס הסכם" value={p.agreement_status} onSave={v => save('agreement_status', v)} />
         </div>}
         {sec === 'תלמיד' && <div className="field-grid">

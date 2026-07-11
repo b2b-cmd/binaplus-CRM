@@ -68,8 +68,8 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
         )}
 
         {(() => {
-          // Chips only for relations that actually have records; empty ones are noise.
-          const withRows = related.filter(r => (r.count ?? (r.rows?.length || 0)) > 0)
+          // Show every defined connectivity (even count 0) so links are always discoverable.
+          const withRows = related
           if (!withRows.length && !relations.length) return null
           return (
             <div className="rel-chips">
@@ -86,7 +86,7 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
             </div>
           )
         })()}
-        {openRel && (related.find(x => x.key === openRel)?.rows?.length || 0) > 0 && <RelatedPanel r={related.find(x => x.key === openRel)} nav={nav} />}
+        {openRel && <RelatedPanel r={related.find(x => x.key === openRel)} nav={nav} />}
       </div>
 
       <div className="rec-grid" style={{ gridTemplateColumns: feed ? '1fr 1fr' : '1fr' }}>
