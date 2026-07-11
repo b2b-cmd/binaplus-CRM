@@ -138,7 +138,7 @@ export const SCHEMA = {
       { key: 'description', label: 'תיאור', type: 'textarea' },
       { key: 'presentation_url', label: 'לינק מצגת', type: 'text', ltr: true },
       { key: 'homework', label: 'שיעורי בית', type: 'textarea' },
-      { key: 'lecturer', label: 'מרצה', type: 'select', optionsFrom: 'reps' },
+      // lecturers are managed as M2M on the lesson detail (lesson_lecturers), not at creation
     ],
     relations: [],
   },

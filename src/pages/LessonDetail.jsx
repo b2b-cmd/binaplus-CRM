@@ -10,6 +10,7 @@ export default function LessonDetail() {
   const { id } = useParams()
   const [l, setL] = useState(null)
   const [users, setUsers] = useState([])
+  const [lectLinks, setLectLinks] = useState([])    // user_ids linked as lecturers (M2M)
   const [cycles, setCycles] = useState([])          // cycles relevant to this lesson's module products
   const [cycleId, setCycleId] = useState('')
   const [students, setStudents] = useState([])
@@ -23,13 +24,15 @@ export default function LessonDetail() {
       setLoading(true)
       const { data: lesson } = await supabase.from('lessons').select('*, product:products(name)').eq('id', id).single()
       setL(lesson)
-      const [{ data: us }, { data: cy }] = await Promise.all([
+      const [{ data: us }, { data: cy }, { data: ll }] = await Promise.all([
         supabase.from('users').select('id, full_name').eq('active', true).order('full_name'),
         lesson?.product_id
           ? supabase.from('cycles').select('id, name, product:products(name)').eq('product_id', lesson.product_id).is('deleted_at', null).order('name')
           : supabase.from('cycles').select('id, name, product:products(name)').is('deleted_at', null).order('name'),
+        supabase.from('lesson_lecturers').select('user_id').eq('lesson_id', id),
       ])
       setUsers(us || []); setCycles(cy || [])
+      setLectLinks((ll || []).map(x => x.user_id))
       setLoading(false)
     })()
   }, [id])
@@ -53,6 +56,10 @@ export default function LessonDetail() {
   }, [cycleId, id])
 
   const save = async (field, value) => { setL(x => ({ ...x, [field]: value })); await updateField('lessons', l, field, value) }
+  const toggleLect = async (uid) => {
+    if (lectLinks.includes(uid)) { await supabase.from('lesson_lecturers').delete().eq('lesson_id', id).eq('user_id', uid); setLectLinks(a => a.filter(x => x !== uid)) }
+    else { await supabase.from('lesson_lecturers').insert({ lesson_id: id, user_id: uid }); setLectLinks(a => [...a, uid]) }
+  }
   const setA = (pid, patch) => setAtt(a => ({ ...a, [pid]: { ...a[pid], ...patch } }))
 
   const saveAttendance = async () => {
@@ -83,13 +90,21 @@ export default function LessonDetail() {
           <EditField label="מס' מפגש" value={l.number} type="number" onSave={v => save('number', v)} />
           <EditField label="שם השיעור" value={l.name} onSave={v => save('name', v)} />
           <EditField label="סוג מפגש" value={l.type} onSave={v => save('type', v)} />
-          <EditField label="מרצה" value={l.lecturer_name} onSave={v => save('lecturer_name', v)} />
           <EditField label="קישור למצגת" value={l.presentation_url} type="link" ltr onSave={v => save('presentation_url', v)} />
         </div>
         <div style={{ marginTop: 8 }}>
           <EditField label="תכנים נלמדים / מערך שיעור" value={l.content} type="textarea" onSave={v => save('content', v)} />
           <EditField label="תרגול ושיעורי בית" value={l.homework} type="textarea" onSave={v => save('homework', v)} />
         </div>
+      </div>
+
+      {/* Lecturers (M2M) */}
+      <div className="card">
+        <div className="card-title"><Icon name="users" /> מרצים {lectLinks.length > 0 && <span className="muted small">({lectLinks.length})</span>}</div>
+        <div className="row wrap" style={{ gap: 6 }}>
+          {users.map(u => <button key={u.id} className={`chip ${lectLinks.includes(u.id) ? 'active' : ''}`} onClick={() => toggleLect(u.id)}>{lectLinks.includes(u.id) ? '✓ ' : ''}{u.full_name}</button>)}
+        </div>
+        {users.length === 0 && <div className="empty small">אין משתמשים פעילים</div>}
       </div>
 
       {/* Attendance */}

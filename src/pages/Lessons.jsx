@@ -17,7 +17,7 @@ export default function Lessons() {
   useEffect(() => {
     (async () => {
       const [{ data: ls }, { data: pr }] = await Promise.all([
-        supabase.from('lessons').select('id, number, name, type, lecturer_name, product_id, product:products(name)').is('deleted_at', null).order('number'),
+        supabase.from('lessons').select('id, number, name, type, lecturer_name, product_id, product:products(name), lesson_lecturers(user:users(full_name))').is('deleted_at', null).order('number'),
         supabase.from('products').select('id, name').order('name'),
       ])
       setRows(ls || []); setProducts(pr || [])
@@ -26,9 +26,10 @@ export default function Lessons() {
     })()
   }, [])
 
+  const lectNames = r => (r.lesson_lecturers || []).map(x => x.user?.full_name).filter(Boolean)
   const filtered = useMemo(() => rows.filter(r => {
     if (product && r.product_id !== product) return false
-    if (q && !`${r.name} ${r.lecturer_name}`.toLowerCase().includes(q.toLowerCase())) return false
+    if (q && !`${r.name} ${lectNames(r).join(' ')} ${r.lecturer_name || ''}`.toLowerCase().includes(q.toLowerCase())) return false
     return true
   }), [rows, product, q])
 
@@ -54,7 +55,7 @@ export default function Lessons() {
                   <td style={{ fontWeight: 700, color: 'var(--mp)' }}>{r.number}</td>
                   <td style={{ fontWeight: 600 }}>{r.name}</td>
                   <td>{r.type ? <span className={`badge ${TYPE_BADGE[r.type] || 'gray'}`}>{r.type}</span> : '-'}</td>
-                  <td className="small">{r.lecturer_name || '-'}</td>
+                  <td className="small">{lectNames(r).join(', ') || r.lecturer_name || '-'}</td>
                 </tr>
               ))}
             </tbody>

@@ -32,7 +32,7 @@ export default function ModuleDetail() {
     setM(mod); setProducts(prods || []); setUsers(usrs || [])
     setProdLinks((mp || []).map(x => x.product_id)); setLectLinks((ml || []).map(x => x.user_id))
     setCycles((cm || []).map(x => x.cycle).filter(Boolean))
-    const { data: ls } = await supabase.from('lessons').select('id, position, name, description, lecturer_user:users!lessons_lecturer_fkey(full_name)').eq('module_id', id).is('deleted_at', null).order('position')
+    const { data: ls } = await supabase.from('lessons').select('id, position, name, description, lesson_lecturers(user:users(full_name))').eq('module_id', id).is('deleted_at', null).order('position')
     setLessons(ls || []); setLoading(false)
   }
   useEffect(() => { load() }, [id])
@@ -84,7 +84,7 @@ export default function ModuleDetail() {
                   <div className="small" style={{ fontWeight: 700 }}>{ls.name}</div>
                   {ls.description && <div className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ls.description}</div>}
                 </div>
-                {ls.lecturer_user?.full_name && <span className="badge gray">{ls.lecturer_user.full_name}</span>}
+                {(ls.lesson_lecturers || []).map(x => x.user?.full_name).filter(Boolean).slice(0, 2).map((n, i) => <span key={i} className="badge gray">{n}</span>)}
                 <Icon name="chevron" size={15} style={{ transform: 'scaleX(-1)', color: 'var(--text-3)' }} />
               </div>
             ))}
