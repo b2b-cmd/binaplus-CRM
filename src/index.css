@@ -304,26 +304,33 @@ table.grid .cell-edit:hover { border-color: var(--border); background: var(--sur
 .stage.done { background: var(--xlp); color: var(--mp); }
 .stage.current { background: var(--g2); color: #fff; border-color: transparent; }
 
-/* ---------- Activity feed (notes / tasks) ---------- */
-.feed-composer { background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 12px; margin-bottom: 14px; }
-.feed-composer textarea { min-height: 56px; background: var(--surface); }
-.feed-footer { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.feed-attach { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--mp); background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--rs); padding: 6px 11px; }
+/* ---------- Activity feed (notes / tasks) — premium composer + cards ---------- */
+.feed-composer { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 15px; margin-bottom: 16px; box-shadow: var(--sh1); transition: var(--t); }
+.feed-composer:focus-within { border-color: var(--lp); box-shadow: 0 0 0 3px var(--xlp); }
+.feed-composer textarea { min-height: 62px; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 10px 12px; font-size: 0.9rem; line-height: 1.55; resize: vertical; transition: var(--t); }
+.feed-composer textarea:focus { background: var(--surface); border-color: var(--lp); }
+.feed-footer { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.feed-attach { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--mp); background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--rs); padding: 0 13px; transition: var(--t); }
 .feed-attach:hover { background: var(--xlp); border-color: var(--lp); }
-.feed-date-presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
-.date-preset { font-size: 0.76rem; font-weight: 600; padding: 4px 10px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; transition: var(--t); }
-.date-preset.active { background: var(--xlp); border-color: var(--lp); color: var(--mp); }
-.urg-btn { font-size: 0.76rem; font-weight: 700; padding: 4px 11px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; transition: var(--t); }
-.feed-item { background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 11px 13px; }
-.feed-item .feed-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
-.feed-item .feed-body { font-size: 0.86rem; white-space: pre-wrap; color: var(--text); line-height: 1.5; }
-.feed-reply { border-inline-start: 2px solid var(--lp); margin-inline-start: 14px; margin-top: 8px; padding-inline-start: 11px; display: flex; flex-direction: column; gap: 8px; }
-.feed-task { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: var(--rs); background: var(--surface-2); border: 1px solid var(--border-soft); border-inline-start: 3px solid var(--mp); }
+.feed-date-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.date-preset { font-size: 0.78rem; font-weight: 600; min-height: 34px; padding: 0 13px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--surface-2); color: var(--text-2); cursor: pointer; transition: var(--t); }
+.date-preset:hover { border-color: var(--lp); color: var(--mp); }
+.date-preset.active { background: var(--g2); border-color: transparent; color: #fff; }
+.urg-btn { font-size: 0.78rem; font-weight: 700; min-height: 34px; padding: 0 14px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--surface-2); cursor: pointer; transition: var(--t); }
+.urg-btn:hover { border-color: var(--lp); }
+.feed-item { background: var(--surface); border: 1.5px solid var(--border-soft); border-radius: var(--r); padding: 14px; box-shadow: var(--sh1); transition: var(--t); }
+.feed-item:hover { border-color: var(--border); }
+.feed-item .feed-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.feed-item .feed-body { font-size: 0.88rem; white-space: pre-wrap; color: var(--text); line-height: 1.55; }
+.feed-reply { border-inline-start: 2.5px solid var(--lp); margin-inline-start: 16px; margin-top: 10px; padding-inline-start: 13px; display: flex; flex-direction: column; gap: 8px; }
+.feed-task { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-radius: var(--r); background: var(--surface); border: 1.5px solid var(--border-soft); border-inline-start: 4px solid var(--mp); box-shadow: var(--sh1); transition: var(--t); }
+.feed-task:hover { border-inline-start-width: 6px; }
 .link-btn { background: none; border: none; color: var(--mp); font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 2px 0; display: inline-flex; align-items: center; gap: 4px; }
 .link-btn:hover { text-decoration: underline; }
 
 /* ---------- Email composer + email thread cards ---------- */
-.composer { border: 1.5px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.composer { border: 1.5px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; box-shadow: var(--sh1); transition: var(--t); }
+.composer:focus-within { border-color: var(--lp); }
 .composer-toolbar { display: flex; align-items: center; gap: 4px; padding: 7px 10px; border-bottom: 1px solid var(--border-soft); background: var(--surface-2); flex-wrap: wrap; }
 .composer-toolbar button { min-width: 30px; height: 28px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.92rem; }
 .composer-toolbar button:hover { background: var(--xlp); color: var(--mp); }
