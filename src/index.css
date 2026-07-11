@@ -1,5 +1,5 @@
 /* ============================================================
-   בינה+ CRM — Design System
+   בינה+ CRM - Design System
    Brand tokens ported from bina-plus.co.il/new-student
    Purple-on-light, Anta (display) + Heebo (body), RTL
    ============================================================ */
@@ -66,14 +66,14 @@
 }
 
 :root[data-theme="dark"] {
-  /* Surfaces — deep aubergine, clearly separated layers */
+  /* Surfaces - deep aubergine, clearly separated layers */
   --bg: #130f1c; --surface: #1e1830; --surface-2: #272039; --border: #3b3255; --border-soft: #2c2542;
-  /* Text — high contrast */
+  /* Text - high contrast */
   --text: #ece9f5; --text-2: #b4abc8; --text-3: #877da2;
   /* Accents (brightened so purple reads on dark) */
   --mp: #b18fe0; --mp2: #c6a8ec; --lp: #6f57a0; --xlp: #2d2544;
   --heading: #ece9f5; --sidebar-bg: #120c20; --sidebar-accent: #a888dd; --gray-bg: #2c2542;
-  /* Status — opaque dark tints + bright foregrounds */
+  /* Status - opaque dark tints + bright foregrounds */
   --ok: #57cf95; --ok-bg: #143025; --warn: #e6b45f; --warn-bg: #332813; --err: #f07a7a; --err-bg: #351b1b; --info: #7db0e0; --info-bg: #16273c;
   --urg-low: #57cf95; --urg-med: #e6b45f; --urg-high: #f07a7a;
   --g1: linear-gradient(135deg, #1a0f33 0%, #2a1a52 50%, #3d2470 100%);
@@ -270,6 +270,9 @@ table.grid .cell-edit:hover { border-color: var(--border); background: var(--sur
 
 /* record two-column grid: fields | activity feed, collapses on narrow screens */
 .rec-grid { display: grid; gap: 16px; align-items: start; }
+/* let each column shrink so a wide .table-wrap scrolls internally instead of
+   inflating its column and shoving the feed off-screen (attendance matrix, #1) */
+.rec-grid > * { min-width: 0; }
 @media (max-width: 1000px) { .rec-grid { grid-template-columns: 1fr !important; } }
 
 /* "+ create related" pills next to relation chips */
