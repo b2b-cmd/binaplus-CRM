@@ -1,37 +1,64 @@
 import { useState } from 'react'
-import { SALES_STATUS_META, TICKET_TYPES, URGENCY } from '../lib/constants'
+import { SALES_STATUS_META, TICKET_TYPES } from '../lib/constants'
 import Icon from './Icon'
 
 // Swagger-like interactive docs for the public-api Edge Function.
 // Documents leads (people) + tickets: create / update / search+filter / delete,
 // with a live "try it" console that fires real requests using a chosen API key.
+// Field lists mirror the real DB schema (public.people / public.tickets).
 
 const METHOD_BADGE = { GET: 'info', POST: 'ok', PATCH: 'warn', DELETE: 'err' }
-const enumVals = (obj) => Object.keys(obj).join(' · ')
+const enumVals = (obj) => Object.keys(obj).join(' / ')
 
-// Writable fields per resource (source of truth: app schema + DB columns).
+// Writable fields per resource. req = required to create a valid record.
+// Auto/read-only fields (id, created_at, updated_at, deleted_at, ...) are listed separately.
 const FIELDS = {
-  leads: [
-    { key: 'full_name', type: 'text', req: true, note: 'שם מלא של הליד/תלמיד' },
-    { key: 'phone', type: 'text', note: 'טלפון (ספרות בלבד מומלץ)' },
-    { key: 'email', type: 'text', note: 'כתובת מייל' },
-    { key: 'source', type: 'text', note: 'מקור הגעה (וובינר / המלצה / פייסבוק…)' },
-    { key: 'sales_status', type: 'enum', note: enumVals(SALES_STATUS_META) },
-    { key: 'assigned_sales_rep', type: 'uuid', note: 'מזהה נציג מטפל (users.id)' },
-    { key: 'product_id', type: 'uuid', note: 'מזהה מוצר (products.id)' },
-    { key: 'cycle_id', type: 'uuid', note: 'מזהה מחזור (cycles.id)' },
-    { key: 'notes', type: 'text', note: 'הערות חופשי' },
-    { key: 'entry_date', type: 'date', note: 'תאריך כניסה (YYYY-MM-DD)' },
-  ],
-  tickets: [
-    { key: 'summary', type: 'text', req: true, note: 'נושא הפנייה' },
-    { key: 'description', type: 'text', note: 'תיאור מלא' },
-    { key: 'person_id', type: 'uuid', note: 'מזהה התלמיד (people.id)' },
-    { key: 'type', type: 'enum', note: TICKET_TYPES.join(' · ') },
-    { key: 'urgency', type: 'enum', note: enumVals(URGENCY) + ' (ברירת מחדל med)' },
-    { key: 'status', type: 'enum', note: 'new · in_progress · waiting · closed' },
-    { key: 'channel', type: 'text', note: 'manual · whatsapp · email · form · phone' },
-  ],
+  leads: {
+    required: 'full_name (ורצוי גם טלפון או מייל ליצירת קשר)',
+    write: [
+      { key: 'full_name', type: 'text', req: true, note: 'שם מלא של הליד או התלמיד' },
+      { key: 'phone', type: 'text', note: 'טלפון. מומלץ מאוד (לפחות טלפון או מייל)' },
+      { key: 'email', type: 'text', note: 'כתובת מייל. מומלץ מאוד (לפחות טלפון או מייל)' },
+      { key: 'source', type: 'text', note: 'מקור הגעה (וובינר / המלצה / פייסבוק)' },
+      { key: 'sales_status', type: 'enum', note: 'סטטוס מכירתי. ברירת מחדל new_lead. ערכים: ' + enumVals(SALES_STATUS_META) },
+      { key: 'assigned_sales_rep', type: 'uuid', note: 'מזהה נציג מטפל (users.id)' },
+      { key: 'product_id', type: 'uuid', note: 'מזהה מוצר (products.id)' },
+      { key: 'cycle_id', type: 'uuid', note: 'מזהה מחזור (cycles.id)' },
+      { key: 'entry_date', type: 'date', note: 'תאריך כניסה (YYYY-MM-DD)' },
+      { key: 'notes', type: 'text', note: 'הערות חופשי' },
+      { key: 'cloudchat_id', type: 'text', note: 'מזהה איש קשר ב-CloudChat' },
+      { key: 'agreement_status', type: 'text', note: 'סטטוס הסכם' },
+      { key: 'received_access', type: 'boolean', note: 'קיבל גישה לפורטל' },
+      { key: 'added_to_group', type: 'boolean', note: 'צורף לקבוצת וואטסאפ' },
+      { key: 'manager_call', type: 'boolean', note: 'בוצעה שיחת מנהל' },
+      { key: 'in_crm', type: 'boolean', note: 'מסונכרן ל-CRM' },
+      { key: 'custom', type: 'jsonb', note: 'אובייקט שדות מותאמים אישית' },
+    ],
+    auto: 'id, created_at, updated_at, deleted_at',
+  },
+  tickets: {
+    required: 'person_id (הפונה) + summary (נושא). אם הפונה לא קיים, צרו קודם ליד (resource=leads)',
+    write: [
+      { key: 'person_id', type: 'uuid', req: true, note: 'מזהה הפונה (people.id). חובה. אם הפונה לא קיים, צרו אותו קודם דרך resource=leads' },
+      { key: 'summary', type: 'text', req: true, note: 'נושא הפנייה' },
+      { key: 'description', type: 'text', note: 'תיאור מלא של הבקשה' },
+      { key: 'type', type: 'enum', note: 'סוג פנייה. ערכים: ' + TICKET_TYPES.join(' / ') },
+      { key: 'urgency', type: 'enum', note: 'ברירת מחדל med. ערכים: low / med / high' },
+      { key: 'status', type: 'enum', note: 'ברירת מחדל new. ערכים: new / in_progress / waiting / closed' },
+      { key: 'channel', type: 'enum', note: 'ברירת מחדל manual. ערכים: whatsapp / email / form / phone / manual' },
+      { key: 'module_id', type: 'uuid', note: 'מזהה מודול רלוונטי (modules.id)' },
+      { key: 'cycle_id', type: 'uuid', note: 'מזהה מחזור (cycles.id)' },
+      { key: 'assigned_rep', type: 'uuid', note: 'מזהה נציג מטפל (users.id)' },
+      { key: 'handled_by', type: 'enum', note: 'מי טיפל. ערכים: human / ai' },
+      { key: 'csat_score', type: 'integer', note: 'שביעות רצון, 1 עד 5' },
+      { key: 'tags', type: 'text[]', note: 'מערך תגיות, למשל ["דחוף","תשלום"]' },
+      { key: 'source_ref', type: 'text', note: 'מזהה מקור חיצוני (למשל מזהה הודעה)' },
+      { key: 'internal_notes', type: 'text', note: 'הערות פנימיות (לא נשלחות לפונה)' },
+      { key: 'sla_due', type: 'timestamptz', note: 'מועד יעד לתגובה (ISO)' },
+      { key: 'custom', type: 'jsonb', note: 'אובייקט שדות מותאמים אישית' },
+    ],
+    auto: 'id, created_at, updated_at, deleted_at, reopen_count, first_response_at, resolved_at',
+  },
 }
 
 // GET filter params per resource.
@@ -42,6 +69,7 @@ const FILTERS = {
     { key: 'assigned_sales_rep', note: 'כל הלידים של נציג מסוים (users.id)' },
     { key: 'product_id', note: 'לפי מוצר' },
     { key: 'cycle_id', note: 'לפי מחזור' },
+    { key: 'source', note: 'לפי מקור הגעה' },
     { key: 'from', note: 'נוצר מתאריך (ISO, למשל 2026-07-01)' },
     { key: 'to', note: 'נוצר עד תאריך (ISO)' },
     { key: 'limit', note: 'מספר תוצאות מרבי (עד 500)' },
@@ -49,10 +77,11 @@ const FILTERS = {
   ],
   tickets: [
     { key: 'q', note: 'חיפוש טקסט חופשי בנושא / תיאור' },
-    { key: 'status', note: 'new · in_progress · waiting · closed' },
-    { key: 'person_id', note: 'כל הפניות של תלמיד מסוים (people.id)' },
-    { key: 'urgency', note: 'low · med · high' },
+    { key: 'status', note: 'new / in_progress / waiting / closed' },
+    { key: 'person_id', note: 'כל הפניות של פונה מסוים (people.id)' },
+    { key: 'urgency', note: 'low / med / high' },
     { key: 'type', note: 'לפי סוג פנייה' },
+    { key: 'channel', note: 'whatsapp / email / form / phone / manual' },
     { key: 'from', note: 'נוצר מתאריך (ISO)' },
     { key: 'to', note: 'נוצר עד תאריך (ISO)' },
     { key: 'limit', note: 'מספר תוצאות מרבי (עד 500)' },
@@ -65,25 +94,26 @@ const OPS = [
   { id: 'get', method: 'GET', title: 'שליפת רשומה בודדת לפי מזהה', qs: (r) => `?resource=${r}&id=<record-id>`, needsId: true, needsBody: false },
   { id: 'create', method: 'POST', title: 'יצירת רשומה חדשה', qs: (r) => `?resource=${r}`, needsId: false, needsBody: true },
   { id: 'update', method: 'PATCH', title: 'עדכון רשומה קיימת', qs: (r) => `?resource=${r}&id=<record-id>`, needsId: true, needsBody: true },
-  { id: 'delete', method: 'DELETE', title: 'מחיקת רשומה (רכה — לסל המיחזור)', qs: (r) => `?resource=${r}&id=<record-id>`, needsId: true, needsBody: false, kind: 'delete' },
+  { id: 'delete', method: 'DELETE', title: 'מחיקת רשומה (רכה, לסל המיחזור)', qs: (r) => `?resource=${r}&id=<record-id>`, needsId: true, needsBody: false, kind: 'delete' },
 ]
 
 export default function ApiDocs({ base, keys = [] }) {
   const [resource, setResource] = useState('leads')
   const url = `${base}/public-api`
   const activeKeys = keys.filter(k => k.active)
+  const meta = FIELDS[resource]
 
   return (
     <div className="card">
-      <div className="card-title"><Icon name="book" /> דוקומנטציית API — לידים ופניות</div>
+      <div className="card-title"><Icon name="book" /> דוקומנטציית API · לידים ופניות</div>
 
       {/* base + auth */}
       <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)', borderRadius: 'var(--rs)', padding: 12, marginBottom: 14 }}>
         <div className="small" style={{ lineHeight: 2 }}>
           <b>Base URL:</b> <code dir="ltr">{url}</code><br />
-          <b>אימות:</b> כותרת <code>x-api-key: &lt;המפתח&gt;</code> (הפיקו מפתח בכרטיס "מפתחות API" למעלה).<br />
+          <b>אימות:</b> כותרת <code>x-api-key: &lt;המפתח&gt;</code> (הפיקו מפתח בהגדרות ← API).<br />
           <b>Content-Type:</b> <code>application/json</code> ל-POST/PATCH · <b>Scopes:</b> קריאה/כתיבה פר משאב.<br />
-          <b>מבנה תשובה:</b> הצלחה → <code dir="ltr">{'{ "data": … }'}</code> · שגיאה → <code dir="ltr">{'{ "error", "remediation" }'}</code> (הסבר תיקון בעברית).
+          <b>מבנה תשובה:</b> הצלחה <code dir="ltr">{'{ "data": … }'}</code> · שגיאה <code dir="ltr">{'{ "error", "remediation" }'}</code> (הסבר תיקון בעברית).
         </div>
       </div>
 
@@ -93,34 +123,38 @@ export default function ApiDocs({ base, keys = [] }) {
         <button className={`chip ${resource === 'tickets' ? 'active' : ''}`} onClick={() => setResource('tickets')}>פניות שירות <code dir="ltr" style={{ fontSize: '0.7rem' }}>resource=tickets</code></button>
       </div>
 
-      {/* operations */}
+      {/* operations (all collapsed by default) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {OPS.map(op => <Operation key={`${op.id}-${resource}`} op={op} resource={resource} url={url} keys={activeKeys} />)}
       </div>
 
       {/* field reference */}
       <div className="card-title" style={{ marginTop: 20 }}><Icon name="tag" /> שדות ל-{resource === 'leads' ? 'ליד' : 'פנייה'}</div>
+      <div style={{ background: 'var(--warn-bg)', border: '1px solid var(--border-soft)', borderRadius: 'var(--rs)', padding: '9px 12px', marginBottom: 10 }}>
+        <span className="small" style={{ fontWeight: 700 }}>שדות חובה: </span><span className="small">{meta.required}</span>
+      </div>
       <div className="table-wrap">
         <table className="grid" style={{ fontSize: '0.82rem' }}>
           <thead><tr><th>שדה</th><th>סוג</th><th>חובה</th><th>הערות / ערכים</th></tr></thead>
           <tbody>
-            {FIELDS[resource].map(f => (
+            {meta.write.map(f => (
               <tr key={f.key}>
                 <td><code dir="ltr">{f.key}</code></td>
                 <td><span className="badge gray">{f.type}</span></td>
-                <td>{f.req ? <span className="badge err">חובה</span> : <span className="muted">—</span>}</td>
+                <td>{f.req ? <span className="badge err">חובה</span> : <span className="muted">לא</span>}</td>
                 <td className="small">{f.note}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <div className="muted small" style={{ marginTop: 8 }}>שדות שנוצרים אוטומטית (קריאה בלבד, אין לשלוח בגוף): <code dir="ltr">{meta.auto}</code></div>
     </div>
   )
 }
 
 function Operation({ op, resource, url, keys }) {
-  const [open, setOpen] = useState(op.id === 'search' || op.id === 'create')
+  const [open, setOpen] = useState(false)
   const [keyVal, setKeyVal] = useState(keys[0]?.key || '')
   const [recId, setRecId] = useState('')
   const [hard, setHard] = useState(false)
@@ -174,7 +208,7 @@ function Operation({ op, resource, url, keys }) {
         <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {op.kind === 'filters' && (
             <div>
-              <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>פילטרים (query params) — כולם אופציונליים</div>
+              <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>פילטרים (query params), כולם אופציונליים</div>
               <div className="table-wrap">
                 <table className="grid" style={{ fontSize: '0.8rem' }}>
                   <tbody>{filterList.map(f => (
@@ -182,6 +216,12 @@ function Operation({ op, resource, url, keys }) {
                   ))}</tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {op.needsBody && resource === 'tickets' && (
+            <div className="small" style={{ background: 'var(--warn-bg)', borderRadius: 8, padding: '8px 11px' }}>
+              <b>שימו לב:</b> חובה <code dir="ltr">person_id</code> של פונה קיים. אם אין פונה, צרו קודם ליד (resource=leads) והשתמשו ב-id שחוזר.
             </div>
           )}
 
@@ -234,5 +274,5 @@ function Operation({ op, resource, url, keys }) {
 function sampleBody(resource) {
   return resource === 'leads'
     ? { full_name: 'שם הליד', phone: '0501234567', email: 'lead@example.com', source: 'API', sales_status: 'new_lead' }
-    : { summary: 'נושא הפנייה', description: 'פירוט הבקשה', urgency: 'med', status: 'new', channel: 'manual' }
+    : { person_id: 'הדביקו-כאן-מזהה-פונה-קיים', summary: 'נושא הפנייה', description: 'פירוט הבקשה', urgency: 'med', status: 'new', channel: 'manual' }
 }

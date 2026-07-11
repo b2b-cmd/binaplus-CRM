@@ -1,4 +1,4 @@
-// public-api — external REST for leads (people) + tickets, protected by API keys with scopes.
+// public-api - external REST for leads (people) + tickets, protected by API keys with scopes.
 // Methods: GET (list w/ filters, or single by id), POST (create), PATCH (update), DELETE (soft-delete).
 // Every call is logged to api_logs with a human "remediation" hint on failure.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -64,8 +64,18 @@ Deno.serve(async (req) => {
       }
     } else if (req.method === 'POST') {
       body = await req.json()
+      // business-rule required fields
+      if (resource === 'leads' && !String(body?.full_name || '').trim()) {
+        status = 400; ok = false; error = 'full_name required'; remediation = 'חובה למלא full_name (שם מלא) ליצירת ליד. מומלץ גם טלפון או מייל.'; return finish()
+      }
+      if (resource === 'tickets') {
+        if (!body?.person_id) { status = 400; ok = false; error = 'person_id required'; remediation = 'חובה לשייך פונה: שלחו person_id של ליד/תלמיד קיים. אם הפונה אינו קיים, צרו אותו קודם עם resource=leads (שם + טלפון או מייל), ואז צרו את הפנייה עם ה-id שחזר.'; return finish() }
+        const { data: person } = await svc.from('people').select('id').eq('id', body.person_id).is('deleted_at', null).maybeSingle()
+        if (!person) { status = 400; ok = false; error = 'person not found'; remediation = 'ה-person_id שנשלח אינו קיים במערכת (או שנמחק). צרו קודם את הפונה עם resource=leads, ואז השתמשו ב-id שחזר.'; return finish() }
+        if (!String(body?.summary || '').trim()) { status = 400; ok = false; error = 'summary required'; remediation = 'חובה למלא summary (נושא הפנייה).'; return finish() }
+      }
       const { data, error: e } = await svc.from(table).insert(body).select().single()
-      if (e) { status = 400; ok = false; error = e.message; remediation = 'בדקו ששמות השדות תקינים ושדות חובה מולאו (למשל full_name לליד, summary לפנייה).' } else out = data
+      if (e) { status = 400; ok = false; error = e.message; remediation = 'בדקו ששמות השדות תקינים ושדות חובה מולאו.' } else out = data
     } else if (req.method === 'PATCH') {
       if (!id) { status = 400; ok = false; error = 'id required'; remediation = 'הוסיפו ?id=<record id> לעדכון.'; return finish() }
       body = await req.json()

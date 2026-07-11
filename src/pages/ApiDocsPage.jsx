@@ -18,10 +18,10 @@ export default function ApiDocsPage() {
       <div className="card" style={{ marginBottom: 16, background: 'var(--surface-2)' }}>
         <div className="row" style={{ gap: 10 }}>
           <div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading)' }}>REST API — לידים ופניות</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading)' }}>REST API · לידים ופניות</div>
             <div className="muted small" style={{ marginTop: 4 }}>
               ממשק חיצוני ליצירה, עדכון, חיפוש ומחיקה של לידים ופניות. {keys.length === 0
-                ? <>אין עדיין מפתחות — הפיקו מפתח ב<a href="#/settings">הגדרות ← API</a>.</>
+                ? <>אין עדיין מפתחות. הפיקו מפתח ב<a href="#/settings">הגדרות ← API</a>.</>
                 : <>יש {keys.filter(k => k.active).length} מפתחות פעילים. ניהול מפתחות ב<a href="#/settings">הגדרות ← API</a>.</>}
             </div>
           </div>

@@ -304,7 +304,7 @@ table.grid .cell-edit:hover { border-color: var(--border); background: var(--sur
 .stage.done { background: var(--xlp); color: var(--mp); }
 .stage.current { background: var(--g2); color: #fff; border-color: transparent; }
 
-/* ---------- Activity feed (notes / tasks) — premium composer + cards ---------- */
+/* ---------- Activity feed (notes / tasks) - premium composer + cards ---------- */
 .feed-composer { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 15px; margin-bottom: 16px; box-shadow: var(--sh1); transition: var(--t); }
 .feed-composer:focus-within { border-color: var(--lp); box-shadow: 0 0 0 3px var(--xlp); }
 .feed-composer textarea { min-height: 62px; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 10px 12px; font-size: 0.9rem; line-height: 1.55; resize: vertical; transition: var(--t); }

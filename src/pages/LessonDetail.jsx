@@ -99,7 +99,7 @@ export default function LessonDetail() {
         </div>
       </div>
 
-      {/* Lecturers (M2M linked to users) — complements the free-text name above */}
+      {/* Lecturers (M2M linked to users) - complements the free-text name above */}
       <div className="card">
         <div className="card-title"><Icon name="users" /> מרצים מקושרים {lectLinks.length > 0 && <span className="muted small">({lectLinks.length})</span>}</div>
         <div className="row wrap" style={{ gap: 6 }}>

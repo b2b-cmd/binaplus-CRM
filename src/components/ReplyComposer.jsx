@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 
 // Feature flag: scheduled email sending is hidden (buggy, deprioritized 2026-07).
-// All the scheduling code below + the outbox/dispatch-outbox backend are kept intact —
+// All the scheduling code below + the outbox/dispatch-outbox backend are kept intact -
 // flip this to true to restore the "תזמון" UI. See also TicketDetail.send() (sendAt branch).
 const SCHEDULED_SEND_ENABLED = false
 

@@ -26,7 +26,7 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
 
   const del = async () => {
     if (!def) return
-    // users are never hard-deleted (auth + FK integrity) — deactivate instead
+    // users are never hard-deleted (auth + FK integrity) - deactivate instead
     if (def.deactivate) {
       if (!confirm(`להשבית את ${def.labelOne} "${title}"? (ניתן להפעיל מחדש בכל עת)`)) return
       const { error } = await supabase.from(def.table).update({ active: false }).eq('id', recordId)

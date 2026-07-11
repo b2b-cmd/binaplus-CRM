@@ -28,7 +28,7 @@ export default function TicketDetail() {
   const [notes, setNotes] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [aiMsg, setAiMsg] = useState('')
-  const [aiDraft, setAiDraft] = useState('')     // AI suggestion — lives in its OWN panel
+  const [aiDraft, setAiDraft] = useState('')     // AI suggestion - lives in its OWN panel
   const [sending, setSending] = useState(false)
   const composerApi = useRef({})                 // imperative handle into ReplyComposer
   const [kb, setKb] = useState([])
@@ -63,7 +63,7 @@ export default function TicketDetail() {
     setAiBusy(true); setAiMsg('')
     try {
       const { draft } = await draftReply({ ticket: t, person: t.person, messages, bullets, mode })
-      setAiDraft(draft)   // suggestion only — does NOT touch what the rep wrote in "מענה"
+      setAiDraft(draft)   // suggestion only - does NOT touch what the rep wrote in "מענה"
     } catch (e) {
       setAiMsg(e.notDeployed
         ? 'סוכן ה-AI יופעל לאחר פריסת ה-Edge Function ומפתח Anthropic (ראו הגדרות).'
