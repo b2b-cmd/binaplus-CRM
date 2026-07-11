@@ -90,6 +90,7 @@ export default function LessonDetail() {
           <EditField label="מס' מפגש" value={l.number} type="number" onSave={v => save('number', v)} />
           <EditField label="שם השיעור" value={l.name} onSave={v => save('name', v)} />
           <EditField label="סוג מפגש" value={l.type} onSave={v => save('type', v)} />
+          <EditField label="מרצה (שם חופשי)" value={l.lecturer_name} onSave={v => save('lecturer_name', v)} />
           <EditField label="קישור למצגת" value={l.presentation_url} type="link" ltr onSave={v => save('presentation_url', v)} />
         </div>
         <div style={{ marginTop: 8 }}>
@@ -98,9 +99,9 @@ export default function LessonDetail() {
         </div>
       </div>
 
-      {/* Lecturers (M2M) */}
+      {/* Lecturers (M2M linked to users) — complements the free-text name above */}
       <div className="card">
-        <div className="card-title"><Icon name="users" /> מרצים {lectLinks.length > 0 && <span className="muted small">({lectLinks.length})</span>}</div>
+        <div className="card-title"><Icon name="users" /> מרצים מקושרים {lectLinks.length > 0 && <span className="muted small">({lectLinks.length})</span>}</div>
         <div className="row wrap" style={{ gap: 6 }}>
           {users.map(u => <button key={u.id} className={`chip ${lectLinks.includes(u.id) ? 'active' : ''}`} onClick={() => toggleLect(u.id)}>{lectLinks.includes(u.id) ? '✓ ' : ''}{u.full_name}</button>)}
         </div>
