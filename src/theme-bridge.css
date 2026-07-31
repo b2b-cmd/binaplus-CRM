@@ -10,6 +10,19 @@
    shadcn semantic tokens below simply point at our existing brand vars.
    ============================================================ */
 
+/* Explicit cascade-layer order. This MUST come before the tailwind import.
+
+   Why it matters: index.css carries the legacy design system including a
+   global `*, *::before, *::after { margin:0; padding:0 }` reset. Unlayered
+   CSS beats layered CSS regardless of specificity, so that one rule was
+   silently killing EVERY tailwind spacing utility in the app (p-4 computed
+   to 0px, shadcn buttons had no padding, table cells had no padding).
+
+   Declaring `legacy` before `utilities` puts the old system underneath the
+   utilities, so tailwind wins where both apply while the legacy classes keep
+   styling the screens that have not been migrated yet. */
+@layer theme, base, components, legacy, utilities;
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
