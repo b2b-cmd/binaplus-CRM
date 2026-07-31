@@ -24,7 +24,11 @@ window.__audit = function () {
   const visible = (el) => {
     const r = el.getBoundingClientRect()
     const cs = getComputedStyle(el)
-    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0'
+    // sr-only text is clipped to a 1px box and is never seen, so judging its
+    // contrast produced a false failure on every screen (the sidebar trigger's
+    // "Toggle Sidebar" label reported 1.14:1).
+    if (/inset\(50%\)/.test(cs.clipPath) || el.closest('.sr-only')) return false
+    return r.width > 1 && r.height > 1 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0'
   }
 
   // 1. Buttons whose label touches the edges
@@ -114,17 +118,24 @@ window.__audit = function () {
   const bgOf = (el) => {
     let n = el
     while (n && n !== document.documentElement) {
-      const bg = getComputedStyle(n).backgroundColor
+      const cs = getComputedStyle(n)
+      // A gradient background has no single colour to compare against. Walking
+      // past it found the card underneath and compared white-on-white, i.e.
+      // reported every gradient button as exactly 1.00:1.
+      if (cs.backgroundImage && cs.backgroundImage !== 'none') return null
+      const bg = cs.backgroundColor
       if (bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg)) return bg
       n = n.parentElement
     }
-    return 'rgb(255,255,255)'
+    return getComputedStyle(document.body).backgroundColor
   }
   document.querySelectorAll('span, p, td, th, label, a, button, h1, h2, h3').forEach(el => {
     if (!visible(el) || el.children.length) return
     const txt = (el.innerText || '').trim(); if (txt.length < 3) return
     const cs = getComputedStyle(el)
-    const l1 = lum(cs.color, bgOf(el)), l2 = lum(bgOf(el), 'rgb(255,255,255)')
+    const bg = bgOf(el)
+    if (!bg) return // gradient-backed: not measurable
+    const l1 = lum(cs.color, bg), l2 = lum(bg, 'rgb(255,255,255)')
     if (l1 == null || l2 == null) return
     const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
     const size = parseFloat(cs.fontSize), bold = parseInt(cs.fontWeight) >= 700
