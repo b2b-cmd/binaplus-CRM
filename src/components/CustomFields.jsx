@@ -8,7 +8,8 @@ import Icon from './Icon'
 const EMPTY = { label: '', key: '', type: 'text', options: '', width: 1 }
 
 // Custom fields for a record: renders values (everyone) + lets managers define/position
-// fields (add/delete/width/reorder) directly from the record screen — no Settings trip.
+// fields (add/edit/delete/width/reorder + edit dropdown options inline) directly from
+// the record screen - no Settings trip.
 export default function CustomFields({ objectType, recordId, table }) {
   const isManager = useAuthStore(s => s.isManager)()
   const [defs, setDefs] = useState([])
@@ -16,6 +17,8 @@ export default function CustomFields({ objectType, recordId, table }) {
   const [ready, setReady] = useState(false)
   const [managing, setManaging] = useState(false)
   const [nf, setNf] = useState(EMPTY)
+  const [editId, setEditId] = useState(null)          // field being edited inline
+  const [ef, setEf] = useState({ label: '', options: '' })
 
   const load = async () => {
     const [{ data: fields }, { data: rec }] = await Promise.all([
@@ -43,6 +46,13 @@ export default function CustomFields({ objectType, recordId, table }) {
   }
   const delField = async (id) => { if (confirm('למחוק שדה מותאם?')) { await supabase.from('custom_fields').delete().eq('id', id); load() } }
   const setWidth = async (id, width) => { await supabase.from('custom_fields').update({ width }).eq('id', id); load() }
+  const startEdit = (d) => { setEditId(d.id); setEf({ label: d.label, options: (d.options || []).join(', ') }) }
+  const saveEdit = async (d) => {
+    const patch = { label: ef.label.trim() || d.label }
+    if (d.type === 'select') patch.options = ef.options.split(',').map(s => s.trim()).filter(Boolean)
+    await supabase.from('custom_fields').update(patch).eq('id', d.id)
+    setEditId(null); clearOptionsCache(); load()
+  }
   const move = async (i, dir) => {
     const j = i + dir; if (j < 0 || j >= defs.length) return
     const a = [...defs];[a[i], a[j]] = [a[j], a[i]]
@@ -61,7 +71,7 @@ export default function CustomFields({ objectType, recordId, table }) {
         </>}
       </div>
 
-      {defs.length === 0 ? <div className="empty small">אין שדות מותאמים{isManager ? ' — הוסיפו בעזרת "ניהול שדות"' : ''}</div> : (
+      {defs.length === 0 ? <div className="empty small">אין שדות מותאמים{isManager ? ' - הוסיפו בעזרת "ניהול שדות"' : ''}</div> : (
         <div className="field-grid">
           {defs.map((d, i) => (
             <div key={d.id} style={{ gridColumn: d.width === 2 ? '1 / -1' : 'auto', position: 'relative' }}>
@@ -69,11 +79,22 @@ export default function CustomFields({ objectType, recordId, table }) {
                 type={d.type === 'select' ? 'select' : ['number', 'date', 'checkbox'].includes(d.type) ? d.type : 'text'}
                 options={(d.options || []).map(o => ({ value: o, label: o }))}
                 onSave={v => save(d.key, v)} />
-              {managing && (
+              {managing && editId === d.id && (
+                <div style={{ marginTop: 6, padding: 10, background: 'var(--surface-2)', borderRadius: 'var(--rs)', border: '1px dashed var(--border)' }}>
+                  <div className="field" style={{ margin: 0 }}><label>תווית השדה</label><input value={ef.label} onChange={e => setEf(f => ({ ...f, label: e.target.value }))} autoFocus /></div>
+                  {d.type === 'select' && <div className="field" style={{ margin: '8px 0 0' }}><label>ערכי הרשימה (מופרדים בפסיק)</label><input value={ef.options} onChange={e => setEf(f => ({ ...f, options: e.target.value }))} placeholder="ערך 1, ערך 2, ערך 3" /></div>}
+                  <div className="row" style={{ gap: 6, marginTop: 8 }}>
+                    <button className="btn sm" onClick={() => saveEdit(d)}>שמור</button>
+                    <button className="btn subtle sm" onClick={() => setEditId(null)}>ביטול</button>
+                  </div>
+                </div>
+              )}
+              {managing && editId !== d.id && (
                 <div className="row" style={{ gap: 4, marginTop: 4 }}>
                   <button className="btn subtle sm" style={{ padding: '2px 6px' }} onClick={() => move(i, -1)} title="הקדם">↑</button>
                   <button className="btn subtle sm" style={{ padding: '2px 6px' }} onClick={() => move(i, 1)} title="אחר">↓</button>
                   <button className="btn subtle sm" style={{ padding: '2px 6px' }} onClick={() => setWidth(d.id, d.width === 2 ? 1 : 2)} title="רוחב">{d.width === 2 ? 'חצי' : 'מלא'}</button>
+                  <button className="btn subtle sm" style={{ padding: '2px 6px' }} onClick={() => startEdit(d)} title="עריכת תווית / ערכים"><Icon name="edit" size={12} /></button>
                   <button className="btn subtle sm" style={{ padding: '2px 6px', color: 'var(--err)' }} onClick={() => delField(d.id)}><Icon name="trash" size={12} /></button>
                 </div>
               )}

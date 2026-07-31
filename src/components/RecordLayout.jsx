@@ -26,6 +26,14 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
 
   const del = async () => {
     if (!def) return
+    // users are never hard-deleted (auth + FK integrity) - deactivate instead
+    if (def.deactivate) {
+      if (!confirm(`להשבית את ${def.labelOne} "${title}"? (ניתן להפעיל מחדש בכל עת)`)) return
+      const { error } = await supabase.from(def.table).update({ active: false }).eq('id', recordId)
+      if (error) return toast('ההשבתה נכשלה', 'err')
+      toast('הושבת')
+      return nav(backTo || def.listPath || '/')
+    }
     if (!confirm(`למחוק ${def.labelOne} "${title}"? ${def.softDelete ? '(ניתן לשחזר מסל המיחזור)' : ''}`)) return
     if (def.softDelete) {
       const { error } = await supabase.from(def.table).update({ deleted_at: new Date().toISOString() }).eq('id', recordId)
@@ -54,7 +62,7 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
               ? <a key={i} className="qa-btn" href={a.href} target="_blank" rel="noreferrer" title={a.title}>{inner}</a>
               : <button key={i} className="qa-btn" onClick={a.onClick} title={a.title}>{inner}</button>
           })}
-          {def && <button className="qa-btn danger" onClick={del} title={`מחק ${def.labelOne}`}><Icon name="trash" size={15} /><span className="qa-label">מחק</span></button>}
+          {def && <button className="qa-btn danger" onClick={del} title={`${def.deactivate ? 'השבת' : 'מחק'} ${def.labelOne}`}><Icon name={def.deactivate ? 'x' : 'trash'} size={15} /><span className="qa-label">{def.deactivate ? 'השבת' : 'מחק'}</span></button>}
         </div>
 
         {stage && (

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { ListBase, useListContext, useUpdate, useRefresh } from 'ra-core'
 import { loadOptions } from '../lib/api'
 import { OPP_STATUS, TRAINING_TYPES } from '../lib/constants'
-import EditableCell from '../components/EditableCell'
+import ResourceList from '../components/ResourceList'
+import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
 import RecordFormModal from '../components/RecordFormModal'
+import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
 
 const statusOpts = Object.entries(OPP_STATUS).map(([value, m]) => ({ value, label: m.label }))
@@ -12,76 +14,110 @@ const typeOpts = TRAINING_TYPES.map(t => ({ value: t, label: t }))
 
 export default function Opportunities() {
   const nav = useNavigate()
-  const [rows, setRows] = useState([])
   const [reps, setReps] = useState([])
-  const [loading, setLoading] = useState(true)
   const [view, setView] = useState('kanban')
   const [showNew, setShowNew] = useState(false)
-  const drag = useRef(null)
 
-  const load = async () => {
-    const [{ data }, o] = await Promise.all([
-      supabase.from('opportunities').select('id, training_type, status, owner, created_at, person:people(full_name), owner_user:users!opportunities_owner_fkey(full_name)').is('deleted_at', null).order('created_at', { ascending: false }),
-      loadOptions(),
-    ])
-    setRows(data || []); setReps(o.reps || []); setLoading(false)
-  }
-  useEffect(() => { load() }, [])
-  const patchRow = (id) => (field, value) => setRows(rs => rs.map(r => r.id === id ? { ...r, [field]: value } : r))
+  useEffect(() => { loadOptions().then(o => setReps(o.reps || [])) }, [])
   const repOpts = reps.map(r => ({ value: r.id, label: r.full_name }))
 
-  const move = async (id, status) => {
-    setRows(rs => rs.map(r => r.id === id ? { ...r, status } : r))
-    await supabase.from('opportunities').update({ status }).eq('id', id)
-  }
+  const columns = [
+    { source: 'person_id', label: 'לקוח', csv: r => r.person?.full_name,
+      render: r => <span style={{ fontWeight: 600 }}>{r.person?.full_name || '-'}</span> },
+    { source: 'training_type', label: 'סוג הכשרה', csv: r => r.training_type,
+      render: r => <Cell row={r} field="training_type" mode="select" options={typeOpts}
+        display={v => <span className="badge mp">{v || '-'}</span>} /> },
+    { source: 'owner', label: 'נציג', csv: r => r.owner_user?.full_name,
+      render: r => <Cell row={r} field="owner" mode="select" options={repOpts}
+        display={() => r.owner_user?.full_name || '-'} /> },
+    { source: 'created_at', label: 'נוצר', csv: r => new Date(r.created_at).toLocaleDateString('he-IL'),
+      render: r => <span className="small">{new Date(r.created_at).toLocaleDateString('he-IL')}</span> },
+    { source: 'status', label: 'סטטוס', csv: r => OPP_STATUS[r.status]?.label,
+      render: r => <Cell row={r} field="status" mode="select" options={statusOpts}
+        display={v => <span className={`badge ${OPP_STATUS[v]?.badge || 'gray'}`}>{OPP_STATUS[v]?.label || v}</span>} /> },
+  ]
+
+  const toggle = (
+    <>
+      <button className={`chip ${view === 'kanban' ? 'active' : ''}`} onClick={() => setView('kanban')}>Kanban</button>
+      <button className={`chip ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>רשימה</button>
+    </>
+  )
+  const createBtn = <button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>
 
   return (
-    <div>
-      <div className="toolbar">
-        <button className={`chip ${view === 'kanban' ? 'active' : ''}`} onClick={() => setView('kanban')}>Kanban</button>
-        <button className={`chip ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>רשימה</button>
-        <div className="spacer" />
-        <span className="muted small">{rows.length} הזדמנויות</span>
-        <button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>
-      </div>
+    <>
+      {view === 'list' ? (
+        <ResourceList
+          resource="opportunities" storeKey="opp" exportName="opportunities"
+          sort={{ field: 'created_at', order: 'DESC' }}
+          columns={columns} search="חיפוש לפי לקוח / סוג"
+          filtersUI={toggle}
+          rowPath={r => `/opportunities/${r.id}`}
+          bulkActions={<BulkDeleteButton />}
+          actions={createBtn}
+        />
+      ) : (
+        // Kanban needs every card at once, so it runs its own unpaginated list.
+        <ListBase resource="opportunities" perPage={500} sort={{ field: 'created_at', order: 'DESC' }} storeKey="opp_kanban">
+          <div className="toolbar">
+            {toggle}
+            <div className="spacer" />
+            <Count />
+            {createBtn}
+          </div>
+          <Kanban />
+        </ListBase>
+      )}
+      {showNew && <RecordFormModal type="opportunity" onClose={() => setShowNew(false)} onCreated={row => nav(`/opportunities/${row.id}`)} />}
+    </>
+  )
+}
 
-      {loading ? <div className="empty"><span className="spinner" /></div>
-        : view === 'kanban' ? (
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
-            {Object.entries(OPP_STATUS).map(([k, m]) => (
-              <div key={k} style={{ minWidth: 220, flex: 1 }} onDragOver={e => e.preventDefault()} onDrop={() => drag.current && move(drag.current, k)}>
-                <div className="row" style={{ marginBottom: 8 }}><span className={`badge ${m.badge}`}>{m.label}</span><span className="muted small">{rows.filter(r => r.status === k).length}</span></div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 60 }}>
-                  {rows.filter(r => r.status === k).map(r => (
-                    <div key={r.id} className="card" style={{ padding: 12, cursor: 'grab' }} draggable
-                      onDragStart={() => { drag.current = r.id }} onClick={() => nav(`/opportunities/${r.id}`)}>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.person?.full_name || '-'}</div>
-                      <div className="row" style={{ marginTop: 6 }}><span className="badge mp" style={{ fontSize: '0.68rem' }}>{r.training_type || '-'}</span></div>
-                      {r.owner_user && <div className="muted small" style={{ marginTop: 4 }}>{r.owner_user.full_name}</div>}
-                    </div>
-                  ))}
-                </div>
+function Cell({ row, field, mode, options, display }) {
+  const refresh = useRefresh()
+  return <EditableCell row={row} table="opportunities" field={field} mode={mode} options={options}
+    display={display} onSaved={() => refresh()} />
+}
+
+function Count() {
+  const { total, isPending } = useListContext()
+  return <span className="muted small">{isPending ? '' : `${total ?? 0} הזדמנויות`}</span>
+}
+
+function Kanban() {
+  const { data, isPending } = useListContext()
+  const nav = useNavigate()
+  const refresh = useRefresh()
+  const [update] = useUpdate()
+  const drag = useRef(null)
+
+  if (isPending) return <div className="empty"><span className="spinner" /></div>
+  const rows = data || []
+
+  const move = (id, status) => update('opportunities', { id, data: { status } }, { onSuccess: () => refresh() })
+
+  return (
+    <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+      {Object.entries(OPP_STATUS).map(([k, m]) => (
+        <div key={k} style={{ minWidth: 220, flex: 1 }} onDragOver={e => e.preventDefault()}
+          onDrop={() => drag.current && move(drag.current, k)}>
+          <div className="row" style={{ marginBottom: 8 }}>
+            <span className={`badge ${m.badge}`}>{m.label}</span>
+            <span className="muted small">{rows.filter(r => r.status === k).length}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 60 }}>
+            {rows.filter(r => r.status === k).map(r => (
+              <div key={r.id} className="card" style={{ padding: 12, cursor: 'grab' }} draggable
+                onDragStart={() => { drag.current = r.id }} onClick={() => nav(`/opportunities/${r.id}`)}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.person?.full_name || '-'}</div>
+                <div className="row" style={{ marginTop: 6 }}><span className="badge mp" style={{ fontSize: '0.68rem' }}>{r.training_type || '-'}</span></div>
+                {r.owner_user && <div className="muted small" style={{ marginTop: 4 }}>{r.owner_user.full_name}</div>}
               </div>
             ))}
           </div>
-        ) : (
-          <div className="table-wrap">
-            <table className="grid">
-              <thead><tr><th>לקוח</th><th>סוג הכשרה</th><th>נציג</th><th>נוצר</th><th>סטטוס</th></tr></thead>
-              <tbody>{rows.map(r => (
-                <tr key={r.id} className="clickable" onClick={() => nav(`/opportunities/${r.id}`)}>
-                  <td style={{ fontWeight: 600 }}>{r.person?.full_name || '-'}</td>
-                  <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="opportunities" field="training_type" mode="select" options={typeOpts} display={v => <span className="badge mp">{v || '-'}</span>} onSaved={patchRow(r.id)} /></td>
-                  <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="opportunities" field="owner" mode="select" options={repOpts} display={v => repOpts.find(o => o.value === v)?.label || '-'} onSaved={patchRow(r.id)} /></td>
-                  <td className="small">{new Date(r.created_at).toLocaleDateString('he-IL')}</td>
-                  <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="opportunities" field="status" mode="select" options={statusOpts} display={v => <span className={`badge ${OPP_STATUS[v]?.badge || 'gray'}`}>{OPP_STATUS[v]?.label || v}</span>} onSaved={patchRow(r.id)} /></td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        )}
-
-      {showNew && <RecordFormModal type="opportunity" onClose={() => setShowNew(false)} onCreated={row => nav(`/opportunities/${row.id}`)} />}
+        </div>
+      ))}
     </div>
   )
 }

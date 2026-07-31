@@ -27,9 +27,13 @@ import Attendance from './pages/Attendance'
 import Knowledge from './pages/Knowledge'
 import Tasks from './pages/Tasks'
 import Reps from './pages/Reps'
+import RepDetail from './pages/RepDetail'
 import Duplicates from './pages/Duplicates'
 import Guide from './pages/Guide'
 import Settings from './pages/Settings'
+import { CoreAdminContext } from 'ra-core'
+import { dataProvider, authProvider, i18nProvider, raStore } from './lib/ra/providers'
+import ApiDocsPage from './pages/ApiDocsPage'
 
 function Loading() {
   return (
@@ -55,6 +59,15 @@ export default function App() {
 
   return (
     <HashRouter>
+      {/* ra-core context only: our router, layout and authStore stay in charge.
+          This is what lets components/admin (DataTable, filters, saved queries,
+          inputs) work inside our own pages during the incremental migration. */}
+      <CoreAdminContext
+        dataProvider={dataProvider}
+        authProvider={authProvider}
+        i18nProvider={i18nProvider}
+        store={raStore}
+      >
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Dashboard />} />
@@ -81,11 +94,14 @@ export default function App() {
           <Route path="guide" element={<Guide />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="reps" element={<Reps />} />
+          <Route path="reps/:id" element={<RepDetail />} />
           <Route path="duplicates" element={<Duplicates />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="api-docs" element={<ApiDocsPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       </Routes>
+      </CoreAdminContext>
     </HashRouter>
   )
 }

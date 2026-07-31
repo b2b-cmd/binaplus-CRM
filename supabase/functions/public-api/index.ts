@@ -1,13 +1,22 @@
-// public-api — external REST for leads (people) + tickets, protected by API keys with scopes.
+// public-api - external REST for leads (people) + tickets, protected by API keys with scopes.
+// Methods: GET (list w/ filters, or single by id), POST (create), PATCH (update), DELETE (soft-delete).
 // Every call is logged to api_logs with a human "remediation" hint on failure.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'x-api-key, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
 }
 const RES = { leads: 'people', tickets: 'tickets' }
+
+// Per-resource query filters for GET lists. `text` cols are searched by ?q=,
+// `eq` cols are exact-match query params, and every list also supports
+// ?from=&to= (created_at range) + ?limit= (<=500) + ?include_deleted=true.
+const FILTERS: Record<string, { text: string[]; eq: string[] }> = {
+  leads: { text: ['full_name', 'phone', 'email'], eq: ['sales_status', 'assigned_sales_rep', 'product_id', 'cycle_id', 'source'] },
+  tickets: { text: ['summary', 'description'], eq: ['status', 'urgency', 'type', 'person_id', 'channel'] },
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -34,24 +43,55 @@ Deno.serve(async (req) => {
     const table = RES[resource as keyof typeof RES]
     if (!table) { status = 400; ok = false; error = 'unknown resource'; remediation = "ציינו resource=leads או resource=tickets ב-query."; return finish() }
     const scope = key.scopes?.[resource] || {}
-    const writing = req.method === 'POST' || req.method === 'PATCH'
+    const writing = req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE'
     if (writing && !scope.write) { status = 403; ok = false; error = 'no write scope'; remediation = `למפתח אין הרשאת כתיבה ל-${resource}. עדכנו את ההרשאות במסך הגדרות ← API.`; return finish() }
     if (!writing && !scope.read) { status = 403; ok = false; error = 'no read scope'; remediation = `למפתח אין הרשאת קריאה ל-${resource}.`; return finish() }
 
     if (req.method === 'GET') {
-      const q = svc.from(table).select('*').limit(500)
-      out = id ? (await q.eq('id', id).maybeSingle()).data : (await q.order('created_at', { ascending: false })).data
-      if (id && !out) { status = 404; ok = false; error = 'not found'; remediation = 'ה-id לא נמצא. בדקו את המזהה.' }
+      if (id) {
+        out = (await svc.from(table).select('*').eq('id', id).maybeSingle()).data
+        if (!out) { status = 404; ok = false; error = 'not found'; remediation = 'ה-id לא נמצא. בדקו את המזהה.' }
+      } else {
+        let q = svc.from(table).select('*')
+        if (url.searchParams.get('include_deleted') !== 'true') q = q.is('deleted_at', null)
+        const f = FILTERS[resource]
+        for (const col of f.eq) { const v = url.searchParams.get(col); if (v != null && v !== '') q = q.eq(col, v) }
+        const from = url.searchParams.get('from'); if (from) q = q.gte('created_at', from)
+        const to = url.searchParams.get('to'); if (to) q = q.lte('created_at', to)
+        const search = url.searchParams.get('q'); if (search) q = q.or(f.text.map(c => `${c}.ilike.%${search}%`).join(','))
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '500') || 500, 500)
+        out = (await q.order('created_at', { ascending: false }).limit(limit)).data
+      }
     } else if (req.method === 'POST') {
       body = await req.json()
+      // business-rule required fields
+      if (resource === 'leads' && !String(body?.full_name || '').trim()) {
+        status = 400; ok = false; error = 'full_name required'; remediation = 'חובה למלא full_name (שם מלא) ליצירת ליד. מומלץ גם טלפון או מייל.'; return finish()
+      }
+      if (resource === 'tickets') {
+        if (!body?.person_id) { status = 400; ok = false; error = 'person_id required'; remediation = 'חובה לשייך פונה: שלחו person_id של ליד/תלמיד קיים. אם הפונה אינו קיים, צרו אותו קודם עם resource=leads (שם + טלפון או מייל), ואז צרו את הפנייה עם ה-id שחזר.'; return finish() }
+        const { data: person } = await svc.from('people').select('id').eq('id', body.person_id).is('deleted_at', null).maybeSingle()
+        if (!person) { status = 400; ok = false; error = 'person not found'; remediation = 'ה-person_id שנשלח אינו קיים במערכת (או שנמחק). צרו קודם את הפונה עם resource=leads, ואז השתמשו ב-id שחזר.'; return finish() }
+        if (!String(body?.summary || '').trim()) { status = 400; ok = false; error = 'summary required'; remediation = 'חובה למלא summary (נושא הפנייה).'; return finish() }
+      }
       const { data, error: e } = await svc.from(table).insert(body).select().single()
-      if (e) { status = 400; ok = false; error = e.message; remediation = 'בדקו ששמות השדות תקינים ושדות חובה מולאו (למשל full_name לליד).' } else out = data
+      if (e) { status = 400; ok = false; error = e.message; remediation = 'בדקו ששמות השדות תקינים ושדות חובה מולאו.' } else out = data
     } else if (req.method === 'PATCH') {
       if (!id) { status = 400; ok = false; error = 'id required'; remediation = 'הוסיפו ?id=<record id> לעדכון.'; return finish() }
       body = await req.json()
       const { data, error: e } = await svc.from(table).update(body).eq('id', id).select().single()
       if (e) { status = 400; ok = false; error = e.message; remediation = 'בדקו את ה-id ואת שמות השדות.' } else out = data
-    } else { status = 405; ok = false; error = 'method not allowed'; remediation = 'השתמשו ב-GET / POST / PATCH.' }
+    } else if (req.method === 'DELETE') {
+      if (!id) { status = 400; ok = false; error = 'id required'; remediation = 'הוסיפו ?id=<record id> למחיקה.'; return finish() }
+      // soft-delete (consistent with the app + סל המיחזור). Send ?hard=true to remove permanently.
+      if (url.searchParams.get('hard') === 'true') {
+        const { error: e } = await svc.from(table).delete().eq('id', id)
+        if (e) { status = 400; ok = false; error = e.message; remediation = 'מחיקה קשה נכשלה (ייתכן שיש רשומות מקושרות). נסו מחיקה רכה.' } else out = { id, deleted: true, hard: true }
+      } else {
+        const { data, error: e } = await svc.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', id).is('deleted_at', null).select().single()
+        if (e || !data) { status = 404; ok = false; error = e?.message || 'not found'; remediation = 'ה-id לא נמצא או שכבר נמחק.' } else out = data
+      }
+    } else { status = 405; ok = false; error = 'method not allowed'; remediation = 'השתמשו ב-GET / POST / PATCH / DELETE.' }
   } catch (e) {
     status = 500; ok = false; error = String((e as Error)?.message || e); remediation = 'שגיאת שרת. נסו שוב או בדקו את גוף הבקשה (JSON תקין).'
   }

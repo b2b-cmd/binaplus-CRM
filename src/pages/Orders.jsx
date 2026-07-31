@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useListContext, useRefresh } from 'ra-core'
 import { loadOptions } from '../lib/api'
 import { ORDER_STATUS, chipColor } from '../lib/constants'
-import EditableCell from '../components/EditableCell'
+import ResourceList from '../components/ResourceList'
+import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
 import RecordFormModal from '../components/RecordFormModal'
+import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
 
 const statusOpts = Object.entries(ORDER_STATUS).map(([value, m]) => ({ value, label: m.label }))
@@ -12,67 +14,69 @@ const money = v => v ? `₪${Number(v).toLocaleString()}` : '-'
 
 export default function Orders() {
   const nav = useNavigate()
-  const [rows, setRows] = useState([])
   const [opts, setOpts] = useState({ products: [], cycles: [] })
-  const [loading, setLoading] = useState(true)
-  const [q, setQ] = useState('')
-  const [status, setStatus] = useState('')
   const [showNew, setShowNew] = useState(false)
 
-  const load = async () => {
-    const [{ data }, o] = await Promise.all([
-      supabase.from('orders').select('id, product_id, cycle_id, deal_amount, deposit, remaining, status, close_date, person:people(full_name), product:products(name), cycle:cycles(name)').is('deleted_at', null).order('created_at', { ascending: false }),
-      loadOptions(),
-    ])
-    setRows(data || []); setOpts(o); setLoading(false)
-  }
-  useEffect(() => { load() }, [])
-  const patchRow = (id) => (field, value) => setRows(rs => rs.map(r => r.id === id ? { ...r, [field]: value } : r))
+  useEffect(() => { loadOptions().then(setOpts) }, [])
   const productOpts = opts.products.map(p => ({ value: p.id, label: p.name }))
   const cycleOpts = opts.cycles.map(c => ({ value: c.id, label: c.name }))
 
-  const filtered = useMemo(() => rows.filter(r => {
-    if (status && r.status !== status) return false
-    if (q && !`${r.person?.full_name}`.toLowerCase().includes(q.toLowerCase())) return false
-    return true
-  }), [rows, q, status])
-  const total = filtered.reduce((s, r) => s + (r.deal_amount || 0), 0)
+  const columns = [
+    { source: 'person_id', label: 'לקוח', csv: r => r.person?.full_name,
+      render: r => <span style={{ fontWeight: 600 }}>{r.person?.full_name || '-'}</span> },
+    { source: 'product_id', label: 'מוצר', csv: r => r.product?.name,
+      render: r => <Cell row={r} field="product_id" mode="select" options={productOpts}
+        display={() => r.product?.name || '-'} /> },
+    { source: 'cycle_id', label: 'מחזור', csv: r => r.cycle?.name,
+      render: r => <Cell row={r} field="cycle_id" mode="select" options={cycleOpts}
+        display={() => r.cycle?.name ? <span className="badge" style={chipColor(r.cycle.name)}>{r.cycle.name}</span> : '-'} /> },
+    { source: 'deal_amount', label: 'סכום', csv: r => r.deal_amount,
+      render: r => <span style={{ fontWeight: 600 }}><Cell row={r} field="deal_amount" display={money} /></span> },
+    { source: 'deposit', label: 'מקדמה', csv: r => r.deposit,
+      render: r => <span className="small"><Cell row={r} field="deposit" display={money} /></span> },
+    { source: 'remaining', label: 'נותר', csv: r => r.remaining, sortable: true,
+      render: r => <span className="small">{money(r.remaining)}</span> },
+    { source: 'close_date', label: 'תאריך', csv: r => r.close_date,
+      render: r => <span className="small"><Cell row={r} field="close_date"
+        display={v => v ? new Date(v).toLocaleDateString('he-IL') : '-'} /></span> },
+    { source: 'status', label: 'סטטוס', csv: r => ORDER_STATUS[r.status]?.label,
+      render: r => <Cell row={r} field="status" mode="select" options={statusOpts}
+        display={v => <span className={`badge ${ORDER_STATUS[v]?.badge || 'gray'}`}>{ORDER_STATUS[v]?.label || v}</span>} /> },
+  ]
+
+  const presets = [
+    { key: 'all', label: 'הכול' },
+    ...Object.entries(ORDER_STATUS).map(([k, m]) => ({ key: k, label: m.label, filter: { status: k } })),
+  ]
 
   return (
-    <div>
-      <div className="toolbar">
-        <div style={{ position: 'relative' }}>
-          <Icon name="search" size={16} style={{ position: 'absolute', insetInlineStart: 10, top: 10, color: 'var(--text-3)' }} />
-          <input className="input" style={{ paddingInlineStart: 32, width: 220 }} placeholder="חיפוש לפי שם" value={q} onChange={e => setQ(e.target.value)} />
-        </div>
-        <select className="input" style={{ width: 150 }} value={status} onChange={e => setStatus(e.target.value)}>
-          <option value="">כל הסטטוסים</option>
-          {Object.entries(ORDER_STATUS).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
-        </select>
-        <div className="spacer" />
-        <span className="muted small">{filtered.length} הזמנות · ₪{total.toLocaleString()}</span>
-        <button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>
-      </div>
-      {loading ? <div className="empty"><span className="spinner" /></div> : (
-        <div className="table-wrap">
-          <table className="grid">
-            <thead><tr><th>לקוח</th><th>מוצר</th><th>מחזור</th><th>סכום</th><th>מקדמה</th><th>נותר</th><th>תאריך</th><th>סטטוס</th></tr></thead>
-            <tbody>{filtered.map(r => (
-              <tr key={r.id} className="clickable" onClick={() => nav(`/orders/${r.id}`)}>
-                <td style={{ fontWeight: 600 }}>{r.person?.full_name || '-'}</td>
-                <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="orders" field="product_id" mode="select" options={productOpts} display={v => productOpts.find(o => o.value === v)?.label || '-'} onSaved={patchRow(r.id)} /></td>
-                <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="orders" field="cycle_id" mode="select" options={cycleOpts} display={v => { const n = cycleOpts.find(o => o.value === v)?.label; return n ? <span className="badge" style={chipColor(n)}>{n}</span> : '-' }} onSaved={patchRow(r.id)} /></td>
-                <td onClick={e => e.stopPropagation()} style={{ fontWeight: 600 }}><EditableCell row={r} table="orders" field="deal_amount" display={v => money(v)} onSaved={patchRow(r.id)} /></td>
-                <td onClick={e => e.stopPropagation()} className="small"><EditableCell row={r} table="orders" field="deposit" display={v => money(v)} onSaved={patchRow(r.id)} /></td>
-                <td className="small">{money(r.remaining)}</td>
-                <td onClick={e => e.stopPropagation()} className="small"><EditableCell row={r} table="orders" field="close_date" display={v => v ? new Date(v).toLocaleDateString('he-IL') : '-'} onSaved={patchRow(r.id)} /></td>
-                <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="orders" field="status" mode="select" options={statusOpts} display={v => <span className={`badge ${ORDER_STATUS[v]?.badge || 'gray'}`}>{ORDER_STATUS[v]?.label || v}</span>} onSaved={patchRow(r.id)} /></td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      )}
+    <>
+      <ResourceList
+        resource="orders" storeKey="ord" exportName="orders"
+        sort={{ field: 'created_at', order: 'DESC' }}
+        columns={columns} presets={presets}
+        search="חיפוש לפי לקוח"
+        filtersUI={<SumBadge />}
+        rowPath={r => `/orders/${r.id}`}
+        bulkActions={<BulkDeleteButton />}
+        actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}
+      />
       {showNew && <RecordFormModal type="order" onClose={() => setShowNew(false)} onCreated={row => nav(`/orders/${row.id}`)} />}
-    </div>
+    </>
   )
+}
+
+function Cell({ row, field, mode, options, display }) {
+  const refresh = useRefresh()
+  return <EditableCell row={row} table="orders" field={field} mode={mode} options={options}
+    display={display} onSaved={() => refresh()} />
+}
+
+/* Sum of the deals on the current page. Labelled as such so it is never
+   mistaken for the total across every page. */
+function SumBadge() {
+  const { data, isPending } = useListContext()
+  if (isPending || !data?.length) return null
+  const sum = data.reduce((s, r) => s + (r.deal_amount || 0), 0)
+  return <span className="badge mp">סה"כ בעמוד: ₪{sum.toLocaleString()}</span>
 }

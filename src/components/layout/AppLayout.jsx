@@ -34,6 +34,7 @@ const GROUPS = [
 const NAV_ADMIN = [
   { path: '/reps', label: 'נציגים והרשאות', icon: 'shield' },
   { path: '/duplicates', label: 'מיזוג כפילויות', icon: 'users' },
+  { path: '/api-docs', label: 'API / דוקומנטציה', icon: 'book' },
   { path: '/settings', label: 'הגדרות', icon: 'cog' },
 ]
 

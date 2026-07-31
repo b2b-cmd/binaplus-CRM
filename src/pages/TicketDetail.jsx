@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { updateField, loadOptions } from '../lib/api'
 import { draftReply } from '../lib/ai'
 import { sendEmailReply } from '../lib/email'
+import { toast } from '../components/Toaster'
 import { useAuthStore } from '../stores/authStore'
 import { TICKET_STATUS, URGENCY, CHANNEL, TICKET_TYPES } from '../lib/constants'
 import CloudChatEmbed from '../components/CloudChatEmbed'
@@ -23,13 +24,13 @@ export default function TicketDetail() {
   const [prior, setPrior] = useState([])
   const [opts, setOpts] = useState({ reps: [], modules: [] })
   const [loading, setLoading] = useState(true)
-  const [reply, setReply] = useState('')
   const [bullets, setBullets] = useState('')
   const [notes, setNotes] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [aiMsg, setAiMsg] = useState('')
+  const [aiDraft, setAiDraft] = useState('')     // AI suggestion - lives in its OWN panel
   const [sending, setSending] = useState(false)
-  const [draftKey, setDraftKey] = useState(0)   // remount composer when AI fills a draft
+  const composerApi = useRef({})                 // imperative handle into ReplyComposer
   const [kb, setKb] = useState([])
   const [askStatus, setAskStatus] = useState(false)   // post-reply "update status?" prompt
 
@@ -62,7 +63,7 @@ export default function TicketDetail() {
     setAiBusy(true); setAiMsg('')
     try {
       const { draft } = await draftReply({ ticket: t, person: t.person, messages, bullets, mode })
-      setReply(draft); setDraftKey(k => k + 1)
+      setAiDraft(draft)   // suggestion only - does NOT touch what the rep wrote in "מענה"
     } catch (e) {
       setAiMsg(e.notDeployed
         ? 'סוכן ה-AI יופעל לאחר פריסת ה-Edge Function ומפתח Anthropic (ראו הגדרות).'
@@ -70,46 +71,50 @@ export default function TicketDetail() {
     } finally { setAiBusy(false) }
   }
 
-  const [sendMsg, setSendMsg] = useState('')
   const reloadMessages = async () => { const { data } = await supabase.from('ticket_messages').select('*').eq('ticket_id', id).order('created_at'); setMessages(data || []) }
 
-  // payload from ReplyComposer: { html, text, files, sendAt }  (sendAt null = now)
+  // payload from ReplyComposer: { html, text, files, sendAt }. Returns true on success (composer clears), false to keep.
   const send = async ({ html, text, files: pending = [], sendAt }) => {
-    if (!text?.trim() && pending.length === 0) return
-    setSending(true); setSendMsg('')
+    if (!text?.trim() && pending.length === 0) return false
+    const emailChannel = t.channel === 'email'
+    if (emailChannel && !t.person?.email) { toast('לתלמיד אין כתובת מייל - לא ניתן לשלוח/לתזמן מייל', 'err'); return false }
+    if (sendAt && !emailChannel) { toast('תזמון שליחה זמין לפניות מייל בלבד', 'err'); return false }
+    setSending(true)
     const subject = 'Re: ' + (t.summary || 'פנייתך לבינה+')
-    // upload files → public URLs
-    const uploaded = []
-    let ai = 0
-    for (const f of pending) {
-      const ext = (f.name.match(/\.[a-z0-9]{1,8}$/i) || [''])[0]
-      const path = `email/${id}/${Date.now()}_${ai++}${ext}`
-      const { error } = await supabase.storage.from('attachments').upload(path, f)
-      if (!error) uploaded.push({ name: f.name, url: supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl })
-    }
-
-    if (sendAt) {
-      // SCHEDULED → outbox + a "scheduled" thread marker
-      await supabase.from('outbox').insert({ ticket_id: id, to_email: t.person?.email, subject, body: text, body_html: html, thread_ref: t.source_ref, attachments: uploaded, send_at: sendAt, created_by: rep?.id })
-      await supabase.from('ticket_messages').insert({ ticket_id: id, direction: 'out', channel: t.channel, sender: rep?.full_name || 'צוות בינה+', body: text, body_html: html, email_subject: subject, email_to: t.person?.email, attachments: uploaded, scheduled: true })
-      setSendMsg(`ההודעה תוזמנה ל-${new Date(sendAt).toLocaleString('he-IL')} ✓`)
-    } else {
-      // IMMEDIATE
-      try {
-        if (t.channel === 'email' && t.person?.email) {
-          await sendEmailReply({ to: t.person.email, subject, body: text, htmlBody: html, threadId: t.source_ref, attachments: uploaded })
-        }
-      } catch (e) {
-        setSendMsg(e.pending ? 'המייל יישלח לאחר חיבור ה-Apps Script (ראו הגדרות). ההודעה נשמרה בשרשור.' : 'השליחה בערוץ נכשלה; ההודעה נשמרה בשרשור.')
+    try {
+      // upload files → public URLs (bucket is public so Gmail/Apps-Script can fetch them)
+      const uploaded = []
+      let ai = 0
+      for (const f of pending) {
+        const ext = (f.name.match(/\.[a-z0-9]{1,8}$/i) || [''])[0]
+        const path = `email/${id}/${Date.now()}_${ai++}${ext}`
+        const { error } = await supabase.storage.from('attachments').upload(path, f)
+        if (error) throw new Error('העלאת קובץ נכשלה')
+        uploaded.push({ name: f.name, url: supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl })
       }
-      await supabase.from('ticket_messages').insert({ ticket_id: id, direction: 'out', channel: t.channel, sender: rep?.full_name || 'צוות בינה+', body: text, body_html: html, email_subject: t.channel === 'email' ? subject : null, email_to: t.channel === 'email' ? t.person?.email : null, attachments: uploaded })
-      const upd = { handled_by: 'human' }
-      if (!t.first_response_at) upd.first_response_at = new Date().toISOString()
-      for (const [k, v] of Object.entries(upd)) await patch(k, v)
-      setAskStatus(true)
+      const filesNote = uploaded.length ? ` (${uploaded.length} קבצים)` : ''
+
+      if (sendAt) {
+        await supabase.from('outbox').insert({ ticket_id: id, to_email: t.person.email, subject, body: text, body_html: html, thread_ref: t.source_ref, attachments: uploaded, send_at: sendAt, created_by: rep?.id })
+        await supabase.from('ticket_messages').insert({ ticket_id: id, direction: 'out', channel: t.channel, sender: rep?.full_name || 'צוות בינה+', body: text, body_html: html, email_subject: subject, email_to: t.person.email, attachments: uploaded, scheduled: true })
+        toast(`המייל תוזמן ל-${new Date(sendAt).toLocaleString('he-IL')}${filesNote}`)
+      } else {
+        if (emailChannel) await sendEmailReply({ to: t.person.email, subject, body: text, htmlBody: html, threadId: t.source_ref, attachments: uploaded })
+        await supabase.from('ticket_messages').insert({ ticket_id: id, direction: 'out', channel: t.channel, sender: rep?.full_name || 'צוות בינה+', body: text, body_html: html, email_subject: emailChannel ? subject : null, email_to: emailChannel ? t.person?.email : null, attachments: uploaded })
+        const upd = { handled_by: 'human' }
+        if (!t.first_response_at) upd.first_response_at = new Date().toISOString()
+        for (const [k, v] of Object.entries(upd)) await patch(k, v)
+        toast(`המענה נשלח${filesNote}`)
+        setAskStatus(true)
+      }
+      await reloadMessages()
+      return true
+    } catch (e) {
+      toast(e.pending ? 'המייל יישלח לאחר חיבור ה-Apps Script (ראו הגדרות)' : `השליחה נכשלה: ${e.message || ''}`, 'err')
+      return false
+    } finally {
+      setSending(false)
     }
-    await reloadMessages()
-    setSending(false)
   }
 
   if (loading) return <div className="empty"><span className="spinner" /></div>
@@ -151,7 +156,7 @@ export default function TicketDetail() {
                   m.channel === 'email'
                     ? <div key={m.id}>
                         {m.scheduled && <span className="badge warn" style={{ marginBottom: 6 }}><Icon name="calendar" size={11} /> מתוזמן לשליחה</span>}
-                        <EmailMessage m={m} />
+                        <EmailMessage m={m} subject={m.email_subject || t.summary} />
                       </div>
                     : <div key={m.id} style={{ alignSelf: m.direction === 'out' ? 'flex-start' : 'flex-end', maxWidth: '80%' }}>
                         <div style={{ background: m.direction === 'out' ? 'var(--xlp)' : 'var(--surface-2)', border: '1px solid var(--border-soft)', borderRadius: 12, padding: '9px 13px' }}>
@@ -181,16 +186,26 @@ export default function TicketDetail() {
               <button className="btn ghost sm" disabled={aiBusy || !bullets.trim()} onClick={() => runAI('expand')}>הרחב נקודות לתשובה</button>
               {aiMsg && <span className="small" style={{ color: 'var(--warn)' }}>{aiMsg}</span>}
             </div>
+            {aiDraft && (
+              <div style={{ marginTop: 12, padding: 12, background: 'var(--surface-2)', border: '1px dashed var(--lp)', borderRadius: 'var(--rs)' }}>
+                <div className="row" style={{ marginBottom: 6 }}>
+                  <span className="small" style={{ fontWeight: 700 }}>הצעת מענה מ-AI</span>
+                  <div className="spacer" />
+                  <button className="btn subtle sm" onClick={() => { composerApi.current?.insert?.(aiDraft.replace(/\n/g, '<br>')); toast('ההצעה הוכנסה למענה') }}>הכנס למענה</button>
+                  <button className="btn subtle sm" onClick={() => { navigator.clipboard?.writeText(aiDraft); toast('הועתק') }}>העתק</button>
+                  <button className="btn subtle sm" style={{ padding: '4px 8px' }} onClick={() => setAiDraft('')} title="נקה"><Icon name="x" size={13} /></button>
+                </div>
+                <div className="small" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, maxHeight: 220, overflow: 'auto' }}>{aiDraft}</div>
+              </div>
+            )}
           </div>
 
           {/* reply */}
           <div className="card">
-            <div className="card-title"><Icon name="mail" /> מענה לפנייה — {CHANNEL[t.channel]?.label || 'תלמיד'}</div>
-            <ReplyComposer key={draftKey} channel={t.channel} kb={kb} sending={sending} onSend={send}
-              initialHtml={reply ? reply.replace(/\n/g, '<br>') : ''} />
+            <div className="card-title"><Icon name="mail" /> מענה לפנייה - {CHANNEL[t.channel]?.label || 'תלמיד'}</div>
+            <ReplyComposer channel={t.channel} kb={kb} sending={sending} onSend={send} editorApi={composerApi} />
             <div className="row" style={{ marginTop: 8 }}>
-              {sendMsg ? <span className="small" style={{ color: sendMsg.includes('תוזמנה') ? 'var(--ok)' : 'var(--warn)', fontWeight: 600 }}>{sendMsg}</span>
-                : <span className="muted small">שליחה מיידית או מתוזמנת · המענה יישלח בערוץ המקורי.</span>}
+              <span className="muted small">המענה יישלח בערוץ המקורי.</span>
             </div>
           </div>
 

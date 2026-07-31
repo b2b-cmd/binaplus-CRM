@@ -1,65 +1,49 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useListContext } from 'ra-core'
 import { supabase } from '../lib/supabase'
-import Icon from '../components/Icon'
+import { chipColor } from '../lib/constants'
+import ResourceList from '../components/ResourceList'
 
 const TYPE_BADGE = { 'חברתי': 'mp', 'העברת ידע': 'info', 'תרגול פרקטי': 'ok' }
+const lectNames = r => (r.lesson_lecturers || []).map(x => x.user?.full_name).filter(Boolean)
 
 export default function Lessons() {
-  const nav = useNavigate()
-  const [rows, setRows] = useState([])
   const [products, setProducts] = useState([])
-  const [product, setProduct] = useState('')
-  const [q, setQ] = useState('')
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    (async () => {
-      const [{ data: ls }, { data: pr }] = await Promise.all([
-        supabase.from('lessons').select('id, number, name, type, lecturer_name, product_id, product:products(name)').is('deleted_at', null).order('number'),
-        supabase.from('products').select('id, name').order('name'),
-      ])
-      setRows(ls || []); setProducts(pr || [])
-      if (pr?.length) setProduct(pr.find(p => /מפתחי/.test(p.name) && !/דיגיטלית/.test(p.name))?.id || pr[0].id)
-      setLoading(false)
-    })()
+    supabase.from('products').select('id, name').order('name').then(({ data }) => setProducts(data || []))
   }, [])
 
-  const filtered = useMemo(() => rows.filter(r => {
-    if (product && r.product_id !== product) return false
-    if (q && !`${r.name} ${r.lecturer_name}`.toLowerCase().includes(q.toLowerCase())) return false
-    return true
-  }), [rows, product, q])
+  const columns = [
+    { source: 'number', label: '#', csv: r => r.number,
+      render: r => <span style={{ fontWeight: 700, color: 'var(--mp)' }}>{r.number}</span> },
+    { source: 'name', label: 'שם המפגש', csv: r => r.name,
+      render: r => <span style={{ fontWeight: 600 }}>{r.name}</span> },
+    { source: 'type', label: 'סוג', csv: r => r.type,
+      render: r => r.type ? <span className={`badge ${TYPE_BADGE[r.type] || 'gray'}`}>{r.type}</span> : '-' },
+    { source: 'lecturer_name', label: 'מרצה', csv: r => lectNames(r).join(', ') || r.lecturer_name,
+      render: r => <span className="small">{lectNames(r).join(', ') || r.lecturer_name || '-'}</span> },
+  ]
+
+  // Products act as the preset row, matching how the screen worked before.
+  const presets = [
+    { key: 'all', label: 'כל ההכשרות' },
+    ...products.map(p => ({ key: p.id, label: p.name, filter: { product_id: p.id } })),
+  ]
 
   return (
-    <div>
-      <div className="toolbar">
-        {products.map(p => <button key={p.id} className={`chip ${product === p.id ? 'active' : ''}`} onClick={() => setProduct(p.id)}>{p.name}</button>)}
-        <div className="spacer" />
-        <div style={{ position: 'relative' }}>
-          <Icon name="search" size={16} style={{ position: 'absolute', insetInlineStart: 10, top: 10, color: 'var(--text-3)' }} />
-          <input className="input" style={{ paddingInlineStart: 32, width: 220 }} placeholder="חיפוש שיעור / מרצה" value={q} onChange={e => setQ(e.target.value)} />
-        </div>
-        <span className="muted small">{filtered.length} שיעורים</span>
-      </div>
-
-      {loading ? <div className="empty"><span className="spinner" /></div> : (
-        <div className="table-wrap">
-          <table className="grid">
-            <thead><tr><th style={{ width: 50 }}>#</th><th>שם המפגש</th><th>סוג</th><th>מרצה</th></tr></thead>
-            <tbody>
-              {filtered.map(r => (
-                <tr key={r.id} className="clickable" onClick={() => nav(`/lessons/${r.id}`)}>
-                  <td style={{ fontWeight: 700, color: 'var(--mp)' }}>{r.number}</td>
-                  <td style={{ fontWeight: 600 }}>{r.name}</td>
-                  <td>{r.type ? <span className={`badge ${TYPE_BADGE[r.type] || 'gray'}`}>{r.type}</span> : '-'}</td>
-                  <td className="small">{r.lecturer_name || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    <ResourceList
+      resource="lessons" storeKey="lsn" exportName="lessons"
+      sort={{ field: 'number', order: 'ASC' }}
+      columns={columns} presets={presets}
+      search="חיפוש שיעור / תוכן"
+      filtersUI={<CountLabel />}
+      rowPath={r => `/lessons/${r.id}`}
+    />
   )
+}
+
+function CountLabel() {
+  const { total, isPending } = useListContext()
+  return <span className="muted small">{isPending ? '' : `${total ?? 0} שיעורים`}</span>
 }

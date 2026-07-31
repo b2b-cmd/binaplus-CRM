@@ -1,0 +1,112 @@
+/* ============================================================
+   Tailwind v4 + shadcn/ui foundation, mapped onto the Bina+ brand.
+
+   Loaded BEFORE index.css so our hand-written design system keeps
+   winning on any shared selector during the incremental migration.
+
+   The whole point of this file: every component in components/ui and
+   components/admin (122 of them, ported from marmelab/atomic-crm, MIT)
+   renders in Bina+ purple automatically - light AND dark - because the
+   shadcn semantic tokens below simply point at our existing brand vars.
+   ============================================================ */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* shadcn ships `dark:` as a `.dark` class. Our app has always driven the
+   theme from :root[data-theme="dark"], so we retarget the variant instead
+   of introducing a second, competing theme switch. */
+@custom-variant dark (&:is([data-theme="dark"] *), [data-theme="dark"]&);
+
+@theme inline {
+  --font-sans: 'Anta', 'Heebo', system-ui, sans-serif;
+
+  --radius-sm: var(--rx);
+  --radius-md: var(--rs);
+  --radius-lg: var(--r);
+  --radius-xl: calc(var(--r) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--ok);
+  --color-warning: var(--warn);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent-color: var(--sidebar-accent-color);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--mp);
+  --color-chart-2: var(--mp2);
+  --color-chart-3: var(--info);
+  --color-chart-4: var(--ok);
+  --color-chart-5: var(--warn);
+}
+
+/* Semantic shadcn tokens -> Bina+ brand tokens (defined in index.css).
+   Both themes are covered automatically: index.css already re-points
+   --surface/--text/--mp etc. under [data-theme="dark"], so these inherit
+   the dark values without a second declaration block. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+
+  --primary: var(--mp);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-2);
+  --accent: var(--xlp);
+  --accent-foreground: var(--heading);
+
+  --destructive: var(--err);
+  --destructive-foreground: #ffffff;
+
+  --input: var(--border);
+  --ring: var(--mp2);
+
+  /* The sidebar is deliberately dark in BOTH themes (brand decision), so it
+     maps to the dedicated tokens rather than the surface ones. */
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--mp2);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent-color: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: var(--mp2);
+}
+
+/* Hebrew/RTL: the ported components still carry some physical Tailwind
+   classes (ml-/mr-/left-/right-). Rather than hand-editing 122 files up
+   front, flip the handful that actually surface in RTL. Components are
+   converted to logical properties as each screen is migrated. */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}

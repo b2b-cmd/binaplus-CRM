@@ -101,6 +101,8 @@ const CHIP_PALETTE = [
   ['#e8f0f9', '#2f5c8f'], ['#e7f6ef', '#1f7a52'], ['#fbf1e0', '#a9691a'],
   ['#f3e8fb', '#7b3fb0'], ['#fde8ee', '#b23a5b'], ['#e6f7f7', '#1f7a7a'],
   ['#eef0e6', '#5c6b1f'], ['#f0ecfa', '#5a4bb0'], ['#fbeee6', '#a1541f'],
+  ['#e9eefb', '#33438f'], ['#fdeef6', '#a03c78'], ['#eafaf0', '#2f7a3f'],
+  ['#fff3e0', '#9a6410'], ['#e8f4fb', '#276b8f'], ['#f2ebe4', '#6b4f2f'],
 ]
 export function chipColor(str = '') {
   let h = 0

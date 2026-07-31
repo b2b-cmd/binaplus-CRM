@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "5250", "--strictPort"],
       "port": 5250
+    },
+    {
+      "name": "bina-crm-qa",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5251", "--strictPort"],
+      "port": 5251
     }
   ]
 }

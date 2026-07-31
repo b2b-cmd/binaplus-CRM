@@ -1,53 +1,61 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useUpdate, useRefresh } from 'ra-core'
 import { useAuthStore } from '../stores/authStore'
+import ResourceList from '../components/ResourceList'
 import Icon from '../components/Icon'
 
 const OBJ_PATH = { people: 'people', tickets: 'tickets', orders: 'orders', opportunities: 'opportunities', modules: 'modules' }
+const overdue = t => t.status === 'open' && t.due_date && new Date(t.due_date) < new Date()
 
 export default function Tasks() {
   const nav = useNavigate()
   const rep = useAuthStore(s => s.rep)
   const isManager = useAuthStore(s => s.isManager)()
-  const [rows, setRows] = useState([])
-  const [view, setView] = useState('open')
-  const [scope, setScope] = useState('mine')
-  const [loading, setLoading] = useState(true)
 
-  const load = async () => {
-    let q = supabase.from('tasks').select('*, assignee_user:users!tasks_assignee_fkey(full_name)').order('due_date', { ascending: true, nullsFirst: false })
-    if (scope === 'mine') q = q.eq('assignee', rep?.id)
-    const { data } = await q
-    setRows(data || []); setLoading(false)
-  }
-  useEffect(() => { load() }, [scope])
+  const columns = [
+    { source: 'status', label: '', sortable: false, csv: false,
+      render: r => <DoneToggle row={r} /> },
+    { source: 'title', label: 'משימה', csv: r => r.title,
+      render: r => <span className="small" style={{ fontWeight: 600, textDecoration: r.status === 'done' ? 'line-through' : 'none' }}>{r.title}</span> },
+    { source: 'assignee', label: 'אחראי', csv: r => r.assignee_user?.full_name,
+      render: r => <span className="small muted">{r.assignee_user?.full_name || '-'}</span> },
+    { source: 'due_date', label: 'תאריך יעד', csv: r => r.due_date,
+      render: r => r.due_date
+        ? <span className={`badge ${overdue(r) ? 'err' : 'gray'}`}>{new Date(r.due_date).toLocaleDateString('he-IL')}{overdue(r) ? ' · באיחור' : ''}</span>
+        : <span className="muted small">-</span> },
+    { source: 'record_id', label: '', sortable: false, csv: false,
+      render: r => r.record_id && OBJ_PATH[r.object_type]
+        ? <button className="btn subtle sm" onClick={e => { e.stopPropagation(); nav(`/${OBJ_PATH[r.object_type]}/${r.record_id}`) }}>לרשומה</button>
+        : null },
+  ]
 
-  const toggle = async (t) => { await supabase.from('tasks').update({ status: t.status === 'open' ? 'done' : 'open' }).eq('id', t.id); setRows(rs => rs.map(x => x.id === t.id ? { ...x, status: x.status === 'open' ? 'done' : 'open' } : x)) }
-  const filtered = useMemo(() => rows.filter(t => view === 'all' || t.status === view), [rows, view])
-  const overdue = (t) => t.status === 'open' && t.due_date && new Date(t.due_date) < new Date()
+  const presets = [
+    { key: 'open', label: 'פתוחות', filter: { status: 'open', ...(rep?.id ? { assignee: rep.id } : {}) } },
+    { key: 'done', label: 'הושלמו', filter: { status: 'done', ...(rep?.id ? { assignee: rep.id } : {}) } },
+    { key: 'all_mine', label: 'הכול שלי', filter: rep?.id ? { assignee: rep.id } : {} },
+    ...(isManager ? [
+      { key: 'team_open', label: 'צוות · פתוחות', filter: { status: 'open' } },
+      { key: 'team_all', label: 'כל הצוות' },
+    ] : []),
+  ]
 
   return (
-    <div>
-      <div className="toolbar">
-        {['open', 'done', 'all'].map(v => <button key={v} className={`chip ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{{ open: 'פתוחות', done: 'הושלמו', all: 'הכול' }[v]}</button>)}
-        <div className="spacer" />
-        {isManager && <><button className={`chip ${scope === 'mine' ? 'active' : ''}`} onClick={() => setScope('mine')}>שלי</button><button className={`chip ${scope === 'all' ? 'active' : ''}`} onClick={() => setScope('all')}>כל הצוות</button></>}
-      </div>
-      {loading ? <div className="empty"><span className="spinner" /></div>
-        : filtered.length === 0 ? <div className="card"><div className="empty">אין משימות</div></div>
-        : <div className="card"><div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {filtered.map(t => (
-            <div key={t.id} className="row" style={{ padding: '9px 11px', borderRadius: 9, background: overdue(t) ? 'var(--err-bg)' : 'var(--surface-2)' }}>
-              <input type="checkbox" checked={t.status === 'done'} onChange={() => toggle(t)} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="small" style={{ fontWeight: 600, textDecoration: t.status === 'done' ? 'line-through' : 'none' }}>{t.title}</div>
-                <div className="small muted">{t.assignee_user?.full_name} {t.due_date && `· ${new Date(t.due_date).toLocaleDateString('he-IL')}`}{overdue(t) && ' · באיחור'}</div>
-              </div>
-              {t.record_id && OBJ_PATH[t.object_type] && <button className="btn subtle sm" onClick={() => nav(`/${OBJ_PATH[t.object_type]}/${t.record_id}`)}>לרשומה</button>}
-            </div>
-          ))}
-        </div></div>}
-    </div>
+    <ResourceList
+      resource="tasks" storeKey="tsk" exportName="tasks"
+      sort={{ field: 'due_date', order: 'ASC' }}
+      filterDefault={{ status: 'open', ...(rep?.id ? { assignee: rep.id } : {}) }}
+      columns={columns} presets={presets}
+      search="חיפוש משימה"
+    />
   )
+}
+
+function DoneToggle({ row }) {
+  const [update] = useUpdate()
+  const refresh = useRefresh()
+  const toggle = (e) => {
+    e.stopPropagation()
+    update('tasks', { id: row.id, data: { status: row.status === 'open' ? 'done' : 'open' } }, { onSuccess: () => refresh() })
+  }
+  return <input type="checkbox" checked={row.status === 'done'} onChange={toggle} onClick={e => e.stopPropagation()} />
 }
