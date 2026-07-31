@@ -9,19 +9,23 @@ import CustomFields from './CustomFields'
 import RecordFormModal from './RecordFormModal'
 import ResourceList from './ResourceList'
 
-/* Each related object gets its own icon and hue. Previously every chip looked
-   identical, so you had to read the label to know what you were looking at. */
+/* Each related object gets its own icon and hue, so the chips are
+   distinguishable at a glance instead of nine identical pills.
+
+   Both the short keys the detail pages actually use (opps/pay/tk/att) and the
+   full resource names are mapped - keying only on the resource names meant
+   almost every chip silently fell through to the default colour. */
 const REL_STYLE = {
-  orders:        { icon: 'file',     hue: 262 },
-  opportunities: { icon: 'tag',      hue: 199 },
-  payments:      { icon: 'money',    hue: 152 },
-  tickets:       { icon: 'inbox',    hue: 24 },
-  people:        { icon: 'users',    hue: 291 },
-  attendance:    { icon: 'calendar', hue: 340 },
-  lessons:       { icon: 'book',     hue: 219 },
-  cycles:        { icon: 'calendar', hue: 45 },
-  modules:       { icon: 'book',     hue: 175 },
-  products:      { icon: 'grid',     hue: 280 },
+  orders: { icon: 'file', hue: 262 },
+  opps: { icon: 'tag', hue: 199 }, opportunities: { icon: 'tag', hue: 199 },
+  pay: { icon: 'money', hue: 152 }, payments: { icon: 'money', hue: 152 },
+  tk: { icon: 'inbox', hue: 24 }, tickets: { icon: 'inbox', hue: 24 },
+  att: { icon: 'calendar', hue: 340 }, attendance: { icon: 'calendar', hue: 340 },
+  people: { icon: 'users', hue: 291 }, students: { icon: 'users', hue: 291 },
+  lessons: { icon: 'book', hue: 219 },
+  cycles: { icon: 'calendar', hue: 45 },
+  modules: { icon: 'book', hue: 175 },
+  products: { icon: 'grid', hue: 280 },
 }
 const relStyle = (key) => REL_STYLE[key] || { icon: 'grid', hue: 270 }
 
@@ -106,9 +110,9 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
                   <div key={r.key} className={`rel-chip ${active ? 'active' : ''}`}
                     style={{
                       '--rel-h': st.hue,
-                      background: `hsl(${st.hue} 70% ${active ? 92 : 97}%)`,
-                      borderColor: `hsl(${st.hue} 55% ${active ? 62 : 85}%)`,
-                      color: `hsl(${st.hue} 60% 32%)`,
+                      background: `hsl(${st.hue} 78% ${active ? 86 : 94}%)`,
+                      borderColor: `hsl(${st.hue} 60% ${active ? 52 : 74}%)`,
+                      color: `hsl(${st.hue} 72% 27%)`,
                     }}
                     onClick={() => setOpenRel(active ? null : r.key)}>
                     <Icon name={st.icon} size={14} />

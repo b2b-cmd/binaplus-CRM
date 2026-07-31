@@ -5,11 +5,12 @@ import RecordFormModal from '../components/RecordFormModal'
 import Icon from '../components/Icon'
 
 export default function Settings() {
-  const [tab, setTab] = useState('trash')
+  const [tab, setTab] = useState('appearance')
 
   return (
     <div>
       <div className="toolbar">
+        <button className={`chip ${tab === 'appearance' ? 'active' : ''}`} onClick={() => setTab('appearance')}>תצוגה</button>
         <button className={`chip ${tab === 'trash' ? 'active' : ''}`} onClick={() => setTab('trash')}>סל מיחזור</button>
         <button className={`chip ${tab === 'api' ? 'active' : ''}`} onClick={() => setTab('api')}>API וגיבויים</button>
         <button className={`chip ${tab === 'integrations' ? 'active' : ''}`} onClick={() => setTab('integrations')}>אינטגרציות</button>
@@ -18,6 +19,7 @@ export default function Settings() {
         <div className="small muted"><Icon name="tag" size={13} /> שדות מותאמים ורשימות מנוהלים כעת ישירות מתוך מסך הרשומה (כרטיס "שדות מותאמים" ← "ניהול שדות"). מוצרים, מודולים ומחזורים מנוהלים במסכים הייעודיים שלהם.</div>
       </div>
 
+      {tab === 'appearance' && <AppearanceTab />}
       {tab === 'trash' && <TrashTab />}
       {tab === 'api' && <ApiBackupTab />}
 
@@ -294,6 +296,37 @@ function InfoCard({ icon, title, status, body }) {
       <div className="card-title"><Icon name={icon} /> {title}</div>
       <span className="badge warn" style={{ marginBottom: 8 }}>{status}</span>
       <p className="muted small">{body}</p>
+    </div>
+  )
+}
+
+/* Theme control. There is also a toggle in the header, but it is an unlabelled
+   icon and users looking for the setting go to Settings first - with nothing
+   here, dark mode reads as "removed". */
+function AppearanceTab() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const apply = (t) => {
+    setTheme(t)
+    document.documentElement.dataset.theme = t
+    localStorage.setItem('theme', t)
+  }
+  const OPTIONS = [
+    { key: 'light', label: 'בהיר', icon: 'sun' },
+    { key: 'dark', label: 'כהה', icon: 'moon' },
+  ]
+  return (
+    <div className="card">
+      <div className="card-title"><Icon name="cog" /> ערכת נושא</div>
+      <p className="muted small" style={{ marginTop: -8, marginBottom: 14 }}>
+        ניתן להחליף גם מהאייקון שבסרגל העליון.
+      </p>
+      <div className="row" style={{ gap: 10 }}>
+        {OPTIONS.map(o => (
+          <button key={o.key} className={`btn ${theme === o.key ? '' : 'ghost'}`} onClick={() => apply(o.key)}>
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

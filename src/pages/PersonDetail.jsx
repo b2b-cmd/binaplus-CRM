@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { updateField, loadOptions } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
-import { SALES_STATUS_META, ORDER_STATUS, OPP_STATUS, chipColor } from '../lib/constants'
+import { TICKET_STATUS, SALES_STATUS_META, ORDER_STATUS, OPP_STATUS, chipColor } from '../lib/constants'
 import RecordLayout from '../components/RecordLayout'
 import EditField from '../components/EditField'
 import CloudChatEmbed from '../components/CloudChatEmbed'
@@ -75,14 +75,43 @@ export default function PersonDetail() {
 
   const related = [
     { key: 'orders', label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`,
+      resource: 'orders', fk: 'person_id', recordId: id,
+      listColumns: [
+        { source: 'deal_amount', label: 'סכום', render: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' },
+        { source: 'cycle_id', label: 'מחזור', render: r => r.cycle?.name || '-' },
+        { source: 'status', label: 'סטטוס', render: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> },
+      ],
       columns: [{ label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'מחזור', get: r => r.cycle?.name || '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
     { key: 'opps', label: 'הזדמנויות', count: opps.length, rows: opps, onOpen: r => `/opportunities/${r.id}`,
+      resource: 'opportunities', fk: 'person_id', recordId: id,
+      listColumns: [
+        { source: 'training_type', label: 'סוג', render: r => r.training_type || '-' },
+        { source: 'status', label: 'סטטוס', render: r => <span className={`badge ${OPP_STATUS[r.status]?.badge}`}>{OPP_STATUS[r.status]?.label}</span> },
+      ],
       columns: [{ label: 'סוג', get: r => r.training_type }, { label: 'סטטוס', get: r => <span className={`badge ${OPP_STATUS[r.status]?.badge}`}>{OPP_STATUS[r.status]?.label}</span> }] },
     { key: 'pay', label: 'תשלומים', count: payments.length, rows: payments, onOpen: r => `/payments/${r.id}`,
+      resource: 'payments', fk: 'person_id', recordId: id,
+      listColumns: [
+        { source: 'payment_type', label: 'אמצעי', render: r => r.payment_type || '-' },
+        { source: 'amount_incl_vat', label: 'סכום', render: r => r.amount_incl_vat ? `₪${r.amount_incl_vat.toLocaleString()}` : '-' },
+        { source: 'financing_pct', label: 'מימון', render: r => `${r.financing_pct || 0}%` },
+      ],
       columns: [{ label: 'אמצעי', get: r => r.payment_type }, { label: 'סכום', get: r => r.amount_incl_vat ? `₪${r.amount_incl_vat.toLocaleString()}` : '-' }, { label: 'מימון', get: r => `${r.financing_pct || 0}%` }] },
     { key: 'tk', label: 'פניות', count: tickets.length, rows: tickets, onOpen: r => `/tickets/${r.id}`,
+      resource: 'tickets', fk: 'person_id', recordId: id,
+      listColumns: [
+        { source: 'summary', label: 'נושא', render: r => r.summary || '-' },
+        { source: 'status', label: 'סטטוס', render: r => <span className={`badge ${TICKET_STATUS[r.status]?.badge || 'gray'}`}>{TICKET_STATUS[r.status]?.label || r.status}</span> },
+        { source: 'created_at', label: 'תאריך', render: r => new Date(r.created_at).toLocaleDateString('he-IL') },
+      ],
       columns: [{ label: 'נושא', get: r => r.summary || '-' }, { label: 'תאריך', get: r => new Date(r.created_at).toLocaleDateString('he-IL') }] },
     { key: 'att', label: 'נוכחות', count: attendance.length, rows: attendance, onOpen: r => r.lesson ? `/lessons/${r.lesson.id}` : '/lessons',
+      resource: 'attendance', fk: 'person_id', recordId: id,
+      listColumns: [
+        { source: 'lesson_id', label: 'שיעור', render: r => r.lesson?.name || '-' },
+        { source: 'cycle_id', label: 'מחזור', render: r => r.cycle?.name || '-' },
+        { source: 'present', label: 'נוכחות', render: r => <span className={`badge ${r.present ? 'ok' : 'err'}`}>{r.present ? 'נוכח/ה' : 'חסר/ה'}</span> },
+      ],
       columns: [
         { label: 'שיעור', get: r => `${r.lesson?.number ? r.lesson.number + '. ' : ''}${r.lesson?.name || '-'}` },
         { label: 'מחזור', get: r => r.cycle?.name || '-' },
