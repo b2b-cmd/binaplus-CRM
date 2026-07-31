@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useListContext, useUpdateMany, useUnselectAll, useRefresh, useResourceContext } from 'ra-core'
+import { useListContext, useUpdateMany, useUnselectAll, useRefresh } from 'ra-core'
 import { Check, Pencil } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -14,8 +14,11 @@ import { toast } from '../Toaster'
 
    `fields` is [{ field, label, options: [{value,label}] }]. */
 export default function BulkEdit({ fields = [] }) {
-  const { selectedIds } = useListContext()
-  const resource = useResourceContext()
+  /* resource comes from the list context, not useResourceContext(): inside the
+     bulk-actions toolbar the resource context is not always populated, and an
+     undefined resource made unselectAll a no-op, so the rows stayed selected
+     after a successful update. */
+  const { selectedIds, resource, onUnselectItems } = useListContext()
   const unselect = useUnselectAll(resource)
   const refresh = useRefresh()
   const [updateMany, { isPending }] = useUpdateMany()
@@ -33,8 +36,12 @@ export default function BulkEdit({ fields = [] }) {
       { ids: selectedIds, data: { [field]: value } },
       {
         onSuccess: () => {
-          toast(`${selectedIds.length} רשומות עודכנו`)
-          setOpen(false); setValue(''); unselect(); refresh()
+          const n = selectedIds.length
+          setOpen(false); setValue('')
+          onUnselectItems?.()
+          unselect()
+          refresh()
+          toast(`${n} רשומות עודכנו`)
         },
         onError: (e) => toast(`העדכון נכשל: ${e?.message || ''}`, 'err'),
       },
