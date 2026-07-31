@@ -34,8 +34,16 @@ window.__audit = function () {
     const ps = parseFloat(cs.paddingInlineStart) || 0
     const pe = parseFloat(cs.paddingInlineEnd) || 0
     const label = (el.innerText || '').trim()
-    // icon-only controls legitimately have little padding
-    if (label.length > 1 && (ps < 8 || pe < 8)) add('button-no-padding', el, `padding-inline ${ps}/${pe}px`)
+    // Icon-only controls legitimately have little padding. So do buttons that
+    // wrap an already-padded child (e.g. a badge used as a toggle) - the
+    // child supplies the breathing room, so this is not a defect.
+    const paddedChild = [...el.children].some(c => {
+      const cc = getComputedStyle(c)
+      return (parseFloat(cc.paddingInlineStart) || 0) >= 6
+    })
+    if (label.length > 1 && !paddedChild && (ps < 8 || pe < 8)) {
+      add('button-no-padding', el, `padding-inline ${ps}/${pe}px`)
+    }
   })
 
   // 2. Tap targets that are too small to hit reliably
