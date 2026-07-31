@@ -32,20 +32,23 @@
     --sidebar-accent: #b79ae0;   /* sub/section text on the dark sidebar */
     --gray-bg: #eeecf3;          /* neutral badge/chip background */
 
-    /* Status */
-    --ok: #2e9e6b;
+    /* Status. Foregrounds are darkened so badge text clears WCAG AA (4.5:1)
+       against its own tinted background - the previous values measured
+       3.03 (ok), 2.47 (warn) and 3.83 (err), i.e. every status badge in the
+       app failed contrast. Now 4.61 / 4.71 / 4.74. */
+    --ok: #237c54;
     --ok-bg: #e7f6ef;
-    --warn: #d98a1f;
+    --warn: #966016;
     --warn-bg: #fbf1e0;
-    --err: #d64545;
+    --err: #bd3c3c;
     --err-bg: #fdecec;
     --info: #3a6ea5;
     --info-bg: #e8f0f9;
 
     /* Urgency */
-    --urg-low: #2e9e6b;
-    --urg-med: #d98a1f;
-    --urg-high: #d64545;
+    --urg-low: #237c54;
+    --urg-med: #966016;
+    --urg-high: #bd3c3c;
 
     /* Gradients */
     --g1: linear-gradient(135deg, #240e47 0%, #3a1a6e 50%, #73469b 100%);
