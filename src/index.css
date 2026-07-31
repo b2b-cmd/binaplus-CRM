@@ -153,7 +153,11 @@
 
   /* ---------- Forms ---------- */
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-  .field label { font-size: 0.85rem; font-weight: 600; color: var(--dp); }
+  /* --dp is the FIXED brand deep purple (logo). It is deliberately not
+     re-themed, so using it for text made every form label invisible on dark
+     surfaces - measured at 1.00:1 (identical to the background) in the
+     student-setup modal. Labels must use the theme-aware text token. */
+  .field label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
   .field label .req { color: var(--err); margin-inline-start: 2px; }
   .input, .field input, .field select, .field textarea {
     width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--rs);
