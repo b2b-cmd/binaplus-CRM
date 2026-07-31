@@ -36,9 +36,10 @@ export const SELECTS = {
   orders: '*, person:people(id,full_name), product:products(id,name), cycle:cycles(id,name)',
   payments: '*, order:orders(id), person:people(id,full_name)',
   cycles: '*, product:products(id,name)',
-  lessons: '*, product:products(id,name), module:modules(id,name)',
+  lessons: '*, product:products(id,name), module:modules(id,name), lesson_lecturers(user:users(full_name))',
   attendance: '*, person:people(id,full_name), lesson:lessons(id,name,module:modules(name)), cycle:cycles(id,name)',
-  tasks: '*, assignee:users!tasks_assignee_fkey(id,full_name)',
+  tasks: '*, assignee_user:users!tasks_assignee_fkey(id,full_name)',
+  modules: '*, module_products(product:products(name)), module_lecturers(user:users(full_name))',
 }
 
 /* Free-text search targets for the `q` filter. Every field here was probed

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useUpdate, useRefresh } from 'ra-core'
 import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
 import { PERMISSION_LEVELS, USER_TYPES } from '../lib/constants'
+import ResourceList from '../components/ResourceList'
 import EditableCell from '../components/EditableCell'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
@@ -12,81 +13,82 @@ const typeOpts = Object.entries(USER_TYPES).map(([value, label]) => ({ value, la
 const FUNCTIONS_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co')
 
 export default function Reps() {
-  const nav = useNavigate()
-  const [rows, setRows] = useState([])
-  const [q, setQ] = useState('')
-  const [view, setView] = useState('all')
   const [showNew, setShowNew] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const load = async () => {
-    const { data } = await supabase.from('users').select('*').order('full_name')
-    setRows(data || []); setLoading(false); clearOptionsCache()
+  const columns = [
+    { source: 'full_name', label: 'שם', csv: r => r.full_name,
+      render: r => <span style={{ fontWeight: 600, color: 'var(--mp)' }}>{r.full_name || '-'}</span> },
+    { source: 'email', label: 'מייל', csv: r => r.email,
+      render: r => <span className="small" dir="ltr" style={{ textAlign: 'start' }}><Cell row={r} field="email" display={v => v || '-'} /></span> },
+    { source: 'phone', label: 'טלפון', csv: r => r.phone,
+      render: r => <span className="small" dir="ltr" style={{ textAlign: 'start' }}><Cell row={r} field="phone" display={v => v || '-'} /></span> },
+    { source: 'permission_level', label: 'הרשאה', csv: r => PERMISSION_LEVELS[r.permission_level],
+      render: r => <Cell row={r} field="permission_level" mode="select" options={permOpts}
+        display={v => <span className="badge info">{PERMISSION_LEVELS[v]}</span>} /> },
+    { source: 'user_type', label: 'סוג', csv: r => USER_TYPES[r.user_type],
+      render: r => <Cell row={r} field="user_type" mode="select" options={typeOpts}
+        display={v => <span className="badge gray">{USER_TYPES[v]}</span>} /> },
+    { source: 'active', label: 'פעיל', csv: r => r.active ? 'פעיל' : 'מושבת', render: r => <ActiveToggle row={r} /> },
+    { source: 'pw', label: 'סיסמה', sortable: false, csv: false, render: r => <ResetBtn row={r} /> },
+  ]
+
+  const presets = [
+    { key: 'all', label: 'הכול' },
+    { key: 'active', label: 'פעילים', filter: { active: true } },
+    { key: 'inactive', label: 'מושבתים', filter: { active: false } },
+  ]
+
+  return (
+    <>
+      <ResourceList
+        key={reloadKey}
+        resource="users" storeKey="rep" exportName="reps"
+        sort={{ field: 'full_name', order: 'ASC' }}
+        columns={columns} presets={presets}
+        search="שם / מייל / טלפון"
+        rowPath={r => `/reps/${r.id}`}
+        actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> נציג חדש</button>}
+      />
+      {showNew && <NewRepModal onClose={() => setShowNew(false)}
+        onCreated={() => { setShowNew(false); clearOptionsCache(); setReloadKey(k => k + 1) }} />}
+    </>
+  )
+}
+
+function Cell({ row, field, mode, options, display }) {
+  const refresh = useRefresh()
+  return <EditableCell row={row} table="users" field={field} mode={mode} options={options}
+    display={display} onSaved={() => { clearOptionsCache(); refresh() }} />
+}
+
+function ActiveToggle({ row }) {
+  const [update] = useUpdate()
+  const refresh = useRefresh()
+  const click = (e) => {
+    e.stopPropagation()
+    update('users', { id: row.id, data: { active: !row.active } },
+      { onSuccess: () => { clearOptionsCache(); refresh() } })
   }
-  useEffect(() => { load() }, [])
+  return <button className={`badge ${row.active ? 'ok' : 'err'}`} style={{ border: 'none', cursor: 'pointer' }} onClick={click}>
+    {row.active ? 'פעיל' : 'מושבת'}
+  </button>
+}
 
-  const patchRow = (id) => (field, value) => setRows(rs => rs.map(r => r.id === id ? { ...r, [field]: value } : r))
-  const toggleActive = async (r) => { await supabase.from('users').update({ active: !r.active }).eq('id', r.id); patchRow(r.id)('active', !r.active); clearOptionsCache() }
-  const resetPassword = async (r) => {
-    const password = prompt(`סיסמה חדשה עבור ${r.full_name}:`)
+function ResetBtn({ row }) {
+  const reset = async (e) => {
+    e.stopPropagation()
+    const password = prompt(`סיסמה חדשה עבור ${row.full_name}:`)
     if (!password) return
     if (password.length < 6) return alert('סיסמה חייבת להיות לפחות 6 תווים')
     const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch(`${FUNCTIONS_URL}/reset-password`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ user_id: r.id, password }),
+      body: JSON.stringify({ user_id: row.id, password }),
     })
     alert(res.ok ? 'הסיסמה עודכנה בהצלחה' : 'איפוס הסיסמה נכשל')
   }
-
-  const filtered = useMemo(() => rows.filter(r => {
-    if (view === 'active' && !r.active) return false
-    if (view === 'inactive' && r.active) return false
-    if (q && !`${r.full_name} ${r.email} ${r.phone}`.toLowerCase().includes(q.toLowerCase())) return false
-    return true
-  }), [rows, view, q])
-
-  const PRESETS = [{ k: 'all', label: 'הכול' }, { k: 'active', label: 'פעילים' }, { k: 'inactive', label: 'מושבתים' }]
-
-  return (
-    <div>
-      <div className="toolbar">
-        {PRESETS.map(p => <button key={p.k} className={`chip ${view === p.k ? 'active' : ''}`} onClick={() => setView(p.k)}>{p.label}</button>)}
-        <div className="spacer" />
-        <button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> נציג חדש</button>
-      </div>
-      <div className="toolbar">
-        <div style={{ position: 'relative' }}>
-          <Icon name="search" size={16} style={{ position: 'absolute', insetInlineStart: 10, top: 10, color: 'var(--text-3)' }} />
-          <input className="input" style={{ paddingInlineStart: 32, width: 220 }} placeholder="שם / מייל / טלפון" value={q} onChange={e => setQ(e.target.value)} />
-        </div>
-        <div className="spacer" /><span className="muted small">{filtered.length} נציגים</span>
-      </div>
-
-      {loading ? <div className="empty"><span className="spinner" /></div> : (
-        <div className="table-wrap">
-          <table className="grid" style={{ minWidth: 760 }}>
-            <thead><tr><th>שם</th><th>מייל</th><th>טלפון</th><th>הרשאה</th><th>סוג</th><th>פעיל</th><th>סיסמה</th></tr></thead>
-            <tbody>
-              {filtered.map(r => (
-                <tr key={r.id} className="clickable" onClick={() => nav(`/reps/${r.id}`)}>
-                  <td style={{ fontWeight: 600, color: 'var(--mp)' }}>{r.full_name || '-'}</td>
-                  <td className="small" dir="ltr" style={{ textAlign: 'start' }} onClick={e => e.stopPropagation()}><EditableCell row={r} table="users" field="email" display={v => v || '-'} onSaved={patchRow(r.id)} /></td>
-                  <td className="small" dir="ltr" style={{ textAlign: 'start' }} onClick={e => e.stopPropagation()}><EditableCell row={r} table="users" field="phone" display={v => v || '-'} onSaved={patchRow(r.id)} /></td>
-                  <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="users" field="permission_level" mode="select" options={permOpts} display={v => <span className="badge info">{PERMISSION_LEVELS[v]}</span>} onSaved={patchRow(r.id)} /></td>
-                  <td onClick={e => e.stopPropagation()}><EditableCell row={r} table="users" field="user_type" mode="select" options={typeOpts} display={v => <span className="badge gray">{USER_TYPES[v]}</span>} onSaved={patchRow(r.id)} /></td>
-                  <td onClick={e => e.stopPropagation()}><button className={`badge ${r.active ? 'ok' : 'err'}`} style={{ border: 'none', cursor: 'pointer' }} onClick={() => toggleActive(r)}>{r.active ? 'פעיל' : 'מושבת'}</button></td>
-                  <td onClick={e => e.stopPropagation()}><button className="btn subtle sm" onClick={() => resetPassword(r)}>איפוס</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {showNew && <NewRepModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load() }} />}
-    </div>
-  )
+  return <button className="btn subtle sm" onClick={reset}>איפוס</button>
 }
 
 const EMPTY = { full_name: '', email: '', phone: '', permission_level: 'user', user_type: 'service', password: '' }
