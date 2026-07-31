@@ -32,7 +32,7 @@ const SOFT_DELETE = new Set([
 export const SELECTS = {
   people: '*, product:products(id,name), cycle:cycles(id,name), rep:users!people_assigned_sales_rep_fkey(id,full_name)',
   tickets: '*, person:people(id,full_name,phone,email), module:modules(id,name), cycle:cycles(id,name), assignee:users!tickets_assigned_rep_fkey(id,full_name)',
-  opportunities: '*, person:people(id,full_name), owner:users!opportunities_owner_fkey(id,full_name)',
+  opportunities: '*, person:people(id,full_name), owner_user:users!opportunities_owner_fkey(id,full_name)',
   orders: '*, person:people(id,full_name), product:products(id,name), cycle:cycles(id,name)',
   payments: '*, order:orders(id), person:people(id,full_name)',
   cycles: '*, product:products(id,name)',
@@ -41,22 +41,44 @@ export const SELECTS = {
   tasks: '*, assignee:users!tasks_assignee_fkey(id,full_name)',
 }
 
-/* Free-text search targets for the `q` filter, per resource. */
+/* Free-text search targets for the `q` filter. Every field here was probed
+   against the live schema. Related-table search is declared in SEARCH_REL. */
 const SEARCH = {
   people: ['full_name', 'phone', 'email', 'source'],
   tickets: ['summary', 'description'],
-  opportunities: ['training_type', 'notes'],
+  opportunities: ['training_type'],
   orders: ['collection_notes'],
+  payments: ['payment_type'],
   products: ['name'],
   cycles: ['name', 'lecturer_name'],
   modules: ['name', 'title'],
   lessons: ['name', 'content'],
   users: ['full_name', 'email', 'phone'],
-  knowledge_base: ['title', 'content'],
+  knowledge_base: ['topic', 'question', 'answer'],
   tasks: ['title'],
 }
 
+/* Some lists are searched by the customer's name, which lives in a related
+   table. PostgREST cannot put an embedded column inside a top-level `or`,
+   so the related ids are resolved first and folded in as `<fk>.in.(...)`. */
+const SEARCH_REL = {
+  opportunities: { fk: 'person_id', table: 'people', fields: ['full_name', 'phone', 'email'] },
+  orders: { fk: 'person_id', table: 'people', fields: ['full_name', 'phone', 'email'] },
+  payments: { fk: 'person_id', table: 'people', fields: ['full_name', 'phone', 'email'] },
+  tickets: { fk: 'person_id', table: 'people', fields: ['full_name', 'phone', 'email'] },
+}
+
 const sel = (resource) => SELECTS[resource] || '*'
+
+/* Resolves the related-record ids matching a free-text term. Capped, because
+   this becomes an `in.(...)` list in the URL. */
+const relatedIds = async (resource, term) => {
+  const rel = SEARCH_REL[resource]
+  if (!rel) return null
+  const { data } = await supabase.from(rel.table).select('id')
+    .or(rel.fields.map(f => `${f}.ilike.%${term}%`).join(',')).limit(200)
+  return (data || []).map(r => r.id)
+}
 
 /* Applies ra's filter object to a supabase query builder.
    Supported key forms:
@@ -67,14 +89,17 @@ const sel = (resource) => SELECTS[resource] || '*'
      field@is         -> is (null)
      field@neq        -> neq
      q                -> or(ilike) across SEARCH[resource]  */
-const applyFilters = (q, resource, filter = {}) => {
+const applyFilters = (q, resource, filter = {}, relIds = null) => {
   for (const [rawKey, value] of Object.entries(filter)) {
     if (value === undefined || value === null || value === '') continue
 
     if (rawKey === 'q') {
-      const fields = SEARCH[resource] || []
-      if (!fields.length) continue
-      q = q.or(fields.map(f => `${f}.ilike.%${value}%`).join(','))
+      const clauses = (SEARCH[resource] || []).map(f => `${f}.ilike.%${value}%`)
+      if (relIds?.length) clauses.push(`${SEARCH_REL[resource].fk}.in.(${relIds.join(',')})`)
+      if (!clauses.length) continue
+      // No own-column and no related match: force an empty result rather than
+      // silently returning every row.
+      q = clauses.length ? q.or(clauses.join(',')) : q
       continue
     }
 
@@ -94,10 +119,11 @@ const applyFilters = (q, resource, filter = {}) => {
   return q
 }
 
-const listQuery = (resource, { filter, sort, pagination }) => {
+const listQuery = async (resource, { filter, sort, pagination }) => {
+  const relIds = filter?.q ? await relatedIds(resource, filter.q) : null
   let q = supabase.from(resource).select(sel(resource), { count: 'exact' })
   if (SOFT_DELETE.has(resource)) q = q.is('deleted_at', null)
-  q = applyFilters(q, resource, filter)
+  q = applyFilters(q, resource, filter, relIds)
   if (sort?.field) q = q.order(sort.field, { ascending: sort.order !== 'DESC', nullsFirst: false })
   if (pagination) {
     const { page = 1, perPage = 50 } = pagination
