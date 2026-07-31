@@ -7,6 +7,23 @@ import Icon from './Icon'
 import ActivityFeed from './ActivityFeed'
 import CustomFields from './CustomFields'
 import RecordFormModal from './RecordFormModal'
+import ResourceList from './ResourceList'
+
+/* Each related object gets its own icon and hue. Previously every chip looked
+   identical, so you had to read the label to know what you were looking at. */
+const REL_STYLE = {
+  orders:        { icon: 'file',     hue: 262 },
+  opportunities: { icon: 'tag',      hue: 199 },
+  payments:      { icon: 'money',    hue: 152 },
+  tickets:       { icon: 'inbox',    hue: 24 },
+  people:        { icon: 'users',    hue: 291 },
+  attendance:    { icon: 'calendar', hue: 340 },
+  lessons:       { icon: 'book',     hue: 219 },
+  cycles:        { icon: 'calendar', hue: 45 },
+  modules:       { icon: 'book',     hue: 175 },
+  products:      { icon: 'grid',     hue: 280 },
+}
+const relStyle = (key) => REL_STYLE[key] || { icon: 'grid', hue: 270 }
 
 // Fireberry-style record shell: header (title/status/quick-actions/related-chips),
 // optional stage bar, main field sections (children) + activity feed sidebar.
@@ -76,16 +93,32 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
         )}
 
         {(() => {
-          // Show every defined connectivity (even count 0) so links are always discoverable.
-          const withRows = related
+          // Only relations that actually have records. An empty "הזמנות 0" on a
+          // fresh lead is noise; creating one is still offered by the + pills.
+          const withRows = related.filter(r => (r.count ?? r.rows?.length ?? 0) > 0)
           if (!withRows.length && !relations.length) return null
           return (
             <div className="rel-chips">
-              {withRows.map(r => (
-                <div key={r.key} className={`rel-chip ${openRel === r.key ? 'active' : ''}`} onClick={() => setOpenRel(openRel === r.key ? null : r.key)}>
-                  {r.label} <span className="cnt">{r.count ?? (r.rows?.length || 0)}</span>
-                </div>
-              ))}
+              {withRows.map(r => {
+                const st = relStyle(r.key)
+                const active = openRel === r.key
+                return (
+                  <div key={r.key} className={`rel-chip ${active ? 'active' : ''}`}
+                    style={{
+                      '--rel-h': st.hue,
+                      background: `hsl(${st.hue} 70% ${active ? 92 : 97}%)`,
+                      borderColor: `hsl(${st.hue} 55% ${active ? 62 : 85}%)`,
+                      color: `hsl(${st.hue} 60% 32%)`,
+                    }}
+                    onClick={() => setOpenRel(active ? null : r.key)}>
+                    <Icon name={st.icon} size={14} />
+                    {r.label}
+                    <span className="cnt" style={{ background: `hsl(${st.hue} 55% 42%)` }}>
+                      {r.count ?? (r.rows?.length || 0)}
+                    </span>
+                  </div>
+                )
+              })}
               {relations.map(rel => (
                 <button key={rel.childType} className="rel-add" onClick={() => setCreateRel(rel)} title={`צור ${rel.label}`}>
                   <Icon name="plus" size={12} /> {rel.label}
@@ -130,6 +163,32 @@ function buildInherit(rel, record, recordId) {
 
 function RelatedPanel({ r, nav }) {
   if (!r) return null
+
+  /* When the relation declares `resource` + `fk`, render the same ResourceList
+     the standalone screens use. That gives the expanded panel selection
+     checkboxes, bulk actions, column show/hide/reorder, sorting and filters -
+     everything the plain read-only table lacked. */
+  if (r.resource && r.fk && r.recordId) {
+    return (
+      <div className="mt-3">
+        <ResourceList
+          resource={r.resource}
+          storeKey={`rel_${r.resource}`}
+          filter={{ [r.fk]: r.recordId }}
+          sort={r.sort || { field: 'created_at', order: 'DESC' }}
+          perPage={r.perPage || 10}
+          columns={r.listColumns}
+          presets={r.presets}
+          facets={r.facets}
+          search={r.search ?? false}
+          rowPath={r.onOpen}
+          bulkActions={r.bulkActions}
+          exportName={r.resource}
+        />
+      </div>
+    )
+  }
+
   const rows = r.rows || []
   return (
     <div className="table-wrap" style={{ marginTop: 12 }}>

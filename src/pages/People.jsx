@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/authStore'
 import { SALES_STATUS_META, chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
+import BulkEdit from '../components/list/BulkEdit'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
 
@@ -71,7 +72,12 @@ export default function People() {
           { field: 'assigned_sales_rep', title: 'נציג', options: repOpts },
         ]}
         rowPath={r => `/people/${r.id}`}
-        bulkActions={<BulkDeleteButton />}
+        bulkActions={<><BulkEdit fields={[
+          { field: 'sales_status', label: 'סטטוס', options: salesOpts },
+          { field: 'product_id', label: 'מוצר', options: productOpts },
+          { field: 'cycle_id', label: 'מחזור', options: cycleOpts },
+          { field: 'assigned_sales_rep', label: 'נציג', options: repOpts },
+        ]} /><BulkDeleteButton /></>}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}
       />
       {showNew && <NewPersonModal onClose={() => setShowNew(false)} onCreated={p => nav(`/people/${p.id}`)} />}

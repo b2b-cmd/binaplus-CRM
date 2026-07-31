@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useListContext, useUpdateMany, useUnselectAll, useRefresh } from 'ra-core'
+import { useListContext, useRefresh } from 'ra-core'
 import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
 import { TICKET_STATUS, URGENCY, CHANNEL, TICKET_STATUS_OPEN, TICKET_TYPES, chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
+import BulkEdit from '../components/list/BulkEdit'
 import EditableCell from '../components/EditableCell'
 import { Button } from '../components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
@@ -91,7 +92,14 @@ export default function Tickets() {
         ]}
         extra={<SavedViews views={views} setViews={setViews} rep={rep} />}
         rowPath={r => `/tickets/${r.id}`}
-        bulkActions={<TicketBulk statusOpts={statusOpts} repOpts={repOpts} />}
+        bulkActions={<><BulkEdit fields={[
+          { field: 'status', label: 'סטטוס', options: statusOpts },
+          { field: 'urgency', label: 'דחיפות', options: urgencyOpts },
+          { field: 'assigned_rep', label: 'נציג מטפל', options: repOpts },
+          { field: 'type', label: 'סוג פנייה', options: typeOpts },
+          { field: 'module_id', label: 'מודול', options: moduleOpts },
+          { field: 'cycle_id', label: 'מחזור', options: cycleOpts },
+        ]} /><BulkDeleteButton /></>}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> פנייה חדשה</button>}
       />
       {showNew && <NewTicketModal onClose={() => setShowNew(false)} typeOpts={typeOpts} urgencyOpts={urgencyOpts}
@@ -133,27 +141,6 @@ function SavedViews({ views, setViews, rep }) {
       <Button variant="outline" size="sm" className="h-9" onClick={save}>
         <Save className="size-4" /> שמור תצוגה
       </Button>
-    </>
-  )
-}
-
-function TicketBulk({ statusOpts, repOpts }) {
-  const { selectedIds } = useListContext()
-  const unselect = useUnselectAll('tickets')
-  const [updateMany] = useUpdateMany()
-  const apply = (field, value) =>
-    updateMany('tickets', { ids: selectedIds, data: { [field]: value || null } }, { onSuccess: () => unselect() })
-  return (
-    <>
-      <select className="input" style={{ height: 32 }} defaultValue=""
-        onChange={e => { if (e.target.value) apply('status', e.target.value); e.target.value = '' }}>
-        <option value="">שנה סטטוס…</option>{statusOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <select className="input" style={{ height: 32 }} defaultValue=""
-        onChange={e => { apply('assigned_rep', e.target.value); e.target.value = '' }}>
-        <option value="">שייך נציג…</option>{repOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <BulkDeleteButton />
     </>
   )
 }

@@ -19,18 +19,18 @@ export default function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0 overflow-x-hidden">
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
           <SidebarTrigger className="-ms-1" />
           <Separator orientation="vertical" className="me-1 h-5" />
-          <h1 className="truncate text-lg font-bold">{titleForPath(loc.pathname)}</h1>
+          <h1 className="min-w-0 truncate text-lg font-bold">{titleForPath(loc.pathname)}</h1>
           <div className="ms-auto flex items-center gap-2">
             <GlobalSearch />
             <Notifications />
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 p-4 pb-16 md:p-6">
+        <main className="min-w-0 flex-1 p-4 pb-16 md:p-6">
           <Outlet />
         </main>
         <Toaster />

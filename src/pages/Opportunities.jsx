@@ -5,6 +5,7 @@ import { loadOptions } from '../lib/api'
 import { OPP_STATUS, TRAINING_TYPES } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
+import BulkEdit from '../components/list/BulkEdit'
 import RecordFormModal from '../components/RecordFormModal'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
@@ -54,7 +55,11 @@ export default function Opportunities() {
           columns={columns} search="חיפוש לפי לקוח / סוג"
           extra={toggle}
           rowPath={r => `/opportunities/${r.id}`}
-          bulkActions={<BulkDeleteButton />}
+          bulkActions={<><BulkEdit fields={[
+            { field: 'status', label: 'סטטוס', options: statusOpts },
+            { field: 'training_type', label: 'סוג הכשרה', options: typeOpts },
+            { field: 'owner', label: 'נציג', options: repOpts },
+          ]} /><BulkDeleteButton /></>}
           actions={createBtn}
         />
       ) : (

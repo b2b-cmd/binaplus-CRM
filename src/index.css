@@ -109,6 +109,17 @@
      textarea in this app is meant to fill its container; the few that need a
      fixed size set it explicitly and override this. */
   textarea { width: 100%; }
+  /* Form controls that are neither .input nor inside .field fall back to the
+     browser's default white background with dark text. Against the dark theme
+     that reads as unstyled patches, and any inherited light text on that white
+     box becomes unreadable - which is what made the money fields in the
+     student-setup modal impossible to read. Theme every control by default. */
+  input, select, textarea {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-3); }
 
   /* ---------- Buttons ---------- */
   .btn {
@@ -191,7 +202,12 @@
   /* Shared list table (ResourceList -> ported shadcn DataTable). Gives it the
      same surface, radius and sticky header the hand-rolled table.grid had, so
      both table styles read as one system during the migration. */
-  .rl-table > div { border-radius: var(--r); border-color: var(--border-soft); background: var(--surface); overflow: hidden; }
+  /* overflow-x must stay `auto`, not `hidden`: the inner table is wider than
+     the viewport on small screens / at zoom, and hiding it made the page
+     itself scroll sideways instead of the table. min-width:0 lets this flex
+     child shrink below its content width. */
+  .rl-table { min-width: 0; }
+  .rl-table > div { border-radius: var(--r); border-color: var(--border-soft); background: var(--surface); overflow-x: auto; overflow-y: hidden; }
   .rl-table table { font-size: 0.9rem; }
   .rl-table thead th { position: sticky; top: 0; z-index: 2; border-bottom: 2px solid var(--border-soft); }
   .rl-table tbody td { border-bottom: 1px solid var(--border-soft); }

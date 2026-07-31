@@ -6,6 +6,7 @@ import { PAYMENT_TYPES } from '../lib/constants'
 import { computeFinancing } from '../lib/finance'
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
+import BulkEdit from '../components/list/BulkEdit'
 import RecordFormModal from '../components/RecordFormModal'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
@@ -49,7 +50,9 @@ export default function Payments() {
         search="חיפוש לפי לקוח"
         extra={<SumBadge />}
         rowPath={r => `/payments/${r.id}`}
-        bulkActions={<BulkDeleteButton />}
+        bulkActions={<><BulkEdit fields={[
+          { field: 'payment_type', label: 'אמצעי תשלום', options: typeOpts },
+        ]} /><BulkDeleteButton /></>}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}
       />
       {showNew && <RecordFormModal type="payment" onClose={() => setShowNew(false)} onCreated={row => nav(`/payments/${row.id}`)} />}
