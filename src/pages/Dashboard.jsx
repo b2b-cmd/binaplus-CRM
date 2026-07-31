@@ -2,16 +2,29 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
 import { TICKET_STATUS_OPEN, TICKET_STATUS, URGENCY, SALES_STATUS_META, chipColor } from '../lib/constants'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import Icon from '../components/Icon'
 
 function Kpi({ label, value, sub, icon }) {
   return (
-    <div className="kpi">
-      {icon && <div className="accent"><Icon name={icon} size={18} /></div>}
-      <div className="label">{label}</div>
-      <div className="value anta">{value}</div>
-      {sub && <div className="sub">{sub}</div>}
-    </div>
+    <Card className="gap-0 py-4">
+      <CardContent className="px-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground text-sm font-medium">{label}</span>
+          {icon && (
+            <span className="bg-accent text-accent-foreground flex size-8 shrink-0 items-center justify-center rounded-md">
+              <Icon name={icon} size={16} />
+            </span>
+          )}
+        </div>
+        <div className="anta mt-2 text-2xl font-bold">{value}</div>
+        {sub && <div className="text-muted-foreground mt-1 text-xs">{sub}</div>}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -68,33 +81,38 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="toolbar">
-        <button className={`chip ${tab === 'service' ? 'active' : ''}`} onClick={() => setTab('service')}>שירות</button>
-        <button className={`chip ${tab === 'sales' ? 'active' : ''}`} onClick={() => setTab('sales')}>מכירות</button>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Button size="sm" variant={tab === 'service' ? 'default' : 'outline'} onClick={() => setTab('service')}>שירות</Button>
+        <Button size="sm" variant={tab === 'sales' ? 'default' : 'outline'} onClick={() => setTab('sales')}>מכירות</Button>
       </div>
 
-      <div className="card" style={{ padding: 12, marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 10 }}>
-          <div className="field" style={{ margin: 0 }}><label>מתאריך</label><input type="date" value={f.from} onChange={e => set('from', e.target.value)} /></div>
-          <div className="field" style={{ margin: 0 }}><label>עד תאריך</label><input type="date" value={f.to} onChange={e => set('to', e.target.value)} /></div>
+      <Card className="mb-4 py-3">
+        <CardContent className="grid gap-3 px-3 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
+          <div className="space-y-1.5"><Label className="text-xs">מתאריך</Label>
+            <Input className="h-9" type="date" dir="ltr" value={f.from} onChange={e => set('from', e.target.value)} /></div>
+          <div className="space-y-1.5"><Label className="text-xs">עד תאריך</Label>
+            <Input className="h-9" type="date" dir="ltr" value={f.to} onChange={e => set('to', e.target.value)} /></div>
           <Sel label="נציג" v={f.rep} on={v => set('rep', v)} opts={opts.reps.map(r => [r.id, r.full_name])} />
           {tab === 'service'
             ? <><Sel label="מודול" v={f.module_id} on={v => set('module_id', v)} opts={opts.modules.map(m => [m.id, m.name])} /><Sel label="מחזור" v={f.cycle_id} on={v => set('cycle_id', v)} opts={opts.cycles.map(c => [c.id, c.name])} /><Sel label="סטטוס" v={f.status} on={v => set('status', v)} opts={Object.entries(TICKET_STATUS).map(([k, m]) => [k, m.label])} /></>
             : <><Sel label="מוצר" v={f.product_id} on={v => set('product_id', v)} opts={opts.products.map(p => [p.id, p.name])} /><Sel label="מחזור" v={f.cycle_id} on={v => set('cycle_id', v)} opts={opts.cycles.map(c => [c.id, c.name])} /></>}
-          <div className="field" style={{ margin: 0, justifyContent: 'end' }}><button className="btn subtle sm" onClick={() => setF({ from: '', to: '', rep: '', product_id: '', cycle_id: '', module_id: '', status: '' })}>ניקוי</button></div>
-        </div>
-      </div>
+          <div className="flex items-end">
+            <Button variant="outline" size="sm" className="h-9 w-full"
+              onClick={() => setF({ from: '', to: '', rep: '', product_id: '', cycle_id: '', module_id: '', status: '' })}>ניקוי</Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {tab === 'service' && (
         <>
-          <div className="kpi-grid">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]">
             <Kpi label="פניות שהתקבלו" value={svc.total} icon="inbox" />
             <Kpi label="פניות פתוחות" value={svc.open} icon="filter" />
             <Kpi label="טופלו - סוכן AI" value={svc.ai} icon="sparkles" />
             <Kpi label="טופלו - נציג אנושי" value={svc.human} icon="users" />
             {svc.csat && <Kpi label="שביעות רצון" value={svc.csat} sub={`מתוך 5 · ${svc.csatCount} דירוגים`} icon="users" />}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16, marginTop: 16 }}>
+          <div className="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
             <Breakdown title="לפי סוג פנייה" icon="tag" data={Object.entries(svc.byType).sort((a, b) => b[1] - a[1])} />
             <Breakdown title="לפי מודול" icon="book" data={Object.entries(svc.byModule).sort((a, b) => b[1] - a[1])} />
             <Breakdown title="לפי מחזור" icon="calendar" data={Object.entries(svc.byCycle).sort((a, b) => b[1] - a[1])} />
@@ -105,14 +123,14 @@ export default function Dashboard() {
 
       {tab === 'sales' && (
         <>
-          <div className="kpi-grid">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]">
             <Kpi label="סה״כ לידים/תלמידים" value={sales.total} icon="users" />
             <Kpi label="תלמידים פעילים" value={sales.byStatus.active_student || 0} icon="users" />
             <Kpi label="לידים חדשים" value={sales.byStatus.new_lead || 0} icon="tag" />
             <Kpi label="הכנסה כוללת" value={`₪${Math.round(sales.rev).toLocaleString()}`} icon="money" />
             <Kpi label="אחוז המרה" value={`${Math.round(100 * (sales.byStatus.active_student || 0) / (sales.total || 1))}%`} sub="פעילים / סה״כ" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16, marginTop: 16 }}>
+          <div className="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
             <Breakdown title="לפי סטטוס מכירתי" icon="filter" data={Object.entries(sales.byStatus).map(([k, v]) => [SALES_STATUS_META[k]?.label || k, v])} />
             <Breakdown title="הכנסה לפי מחזור" icon="calendar" money data={Object.entries(sales.revByCycle).sort((a, b) => b[1] - a[1])} />
             <Breakdown title="הכנסה לפי מוצר" icon="grid" money colorize data={Object.entries(sales.revByProduct).sort((a, b) => b[1] - a[1])} />
@@ -126,14 +144,29 @@ export default function Dashboard() {
 }
 
 function Sel({ label, v, on, opts }) {
-  return <div className="field" style={{ margin: 0 }}><label>{label}</label><select value={v} onChange={e => on(e.target.value)}><option value="">הכול</option>{opts.map(([val, l]) => <option key={val} value={val}>{l}</option>)}</select></div>
+  const ALL = '__all__'
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <Select value={v || ALL} onValueChange={x => on(x === ALL ? '' : x)}>
+        <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>הכול</SelectItem>
+          {opts.map(([val, l]) => <SelectItem key={val} value={val}>{l}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 }
 function Breakdown({ title, icon, data, money, colorize }) {
   const max = Math.max(1, ...data.map(d => d[1]))
   return (
-    <div className="card">
-      <div className="card-title"><Icon name={icon} /> {title}</div>
-      {data.length === 0 ? <div className="empty small">אין נתונים</div> : (
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
+        <CardTitle className="flex items-center gap-2 text-base"><Icon name={icon} size={16} /> {title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+      {data.length === 0 ? <p className="text-muted-foreground py-4 text-center text-sm">אין נתונים</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {data.slice(0, 8).map(([k, v]) => (
             <div key={k}>
@@ -143,6 +176,7 @@ function Breakdown({ title, icon, data, money, colorize }) {
           ))}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }
