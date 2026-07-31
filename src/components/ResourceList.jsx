@@ -33,10 +33,13 @@ function Toolbar({ presets, presetField, search, filtersUI, actions, columns, ex
     return () => clearTimeout(t)
   }, [q])
 
+  // Compare by value, not identity: some presets carry array filters
+  // (e.g. status@in: [...open statuses]) which never match by reference.
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
   const activePreset = presets?.find(p =>
     p.filter === undefined
       ? Object.keys(filterValues || {}).filter(k => k !== 'q').length === 0
-      : Object.entries(p.filter).every(([k, v]) => filterValues?.[k] === v))
+      : same({ ...p.filter }, Object.fromEntries(Object.entries(filterValues || {}).filter(([k]) => k !== 'q'))))
 
   const setPreset = (p) => {
     const next = { ...(p.filter || {}) }
@@ -113,11 +116,12 @@ function Body({ columns, rowPath, bulkActions }) {
 }
 
 export default function ResourceList({
-  resource, storeKey, sort, perPage = 50, filter, columns,
+  resource, storeKey, sort, perPage = 50, filter, filterDefault, columns,
   presets, search, filtersUI, actions, rowPath, bulkActions, exportName,
 }) {
   return (
-    <ListBase resource={resource} sort={sort} perPage={perPage} filter={filter} storeKey={storeKey || resource}>
+    <ListBase resource={resource} sort={sort} perPage={perPage} filter={filter}
+      filterDefaultValues={filterDefault} storeKey={storeKey || resource}>
       <Toolbar presets={presets} search={search} filtersUI={filtersUI} actions={actions}
         columns={columns} exportName={exportName || resource} />
       <Body columns={columns} rowPath={rowPath} bulkActions={bulkActions} />

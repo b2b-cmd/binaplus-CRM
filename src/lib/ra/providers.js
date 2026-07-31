@@ -31,14 +31,14 @@ const SOFT_DELETE = new Set([
    (product, cycle, owner) without an extra round trip. */
 export const SELECTS = {
   people: '*, product:products(id,name), cycle:cycles(id,name), rep:users!people_assigned_sales_rep_fkey(id,full_name)',
-  tickets: '*, person:people(id,full_name,phone,email), assignee:users!tickets_assigned_to_fkey(id,full_name)',
-  opportunities: '*, person:people(id,full_name), owner:users!opportunities_owner_id_fkey(id,full_name)',
+  tickets: '*, person:people(id,full_name,phone,email), module:modules(id,name), cycle:cycles(id,name), assignee:users!tickets_assigned_rep_fkey(id,full_name)',
+  opportunities: '*, person:people(id,full_name), owner:users!opportunities_owner_fkey(id,full_name)',
   orders: '*, person:people(id,full_name), product:products(id,name), cycle:cycles(id,name)',
   payments: '*, order:orders(id), person:people(id,full_name)',
   cycles: '*, product:products(id,name)',
   lessons: '*, product:products(id,name), module:modules(id,name)',
   attendance: '*, person:people(id,full_name), lesson:lessons(id,name,module:modules(name)), cycle:cycles(id,name)',
-  tasks: '*, assignee:users(id,full_name)',
+  tasks: '*, assignee:users!tasks_assignee_fkey(id,full_name)',
 }
 
 /* Free-text search targets for the `q` filter, per resource. */
