@@ -59,17 +59,17 @@ export const SearchInput = (inProps: SearchInputProps) => {
         helperText={false}
         placeholder={translate("ra.action.search")}
         className={cn("flex-grow", className)}
-        inputClassName={cn("pr-8", showClearButton ? "pr-16" : "pr-8")}
+        inputClassName={cn("pe-8", showClearButton ? "pe-16" : "pe-8")}
         {...rest}
       />
-      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <Search className="absolute end-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       {showClearButton && (
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={handleClear}
-          className="absolute right-8 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full p-0 text-muted-foreground"
+          className="absolute end-8 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full p-0 text-muted-foreground"
           aria-label={translate("ra.action.clear_search", {
             _: "Clear search",
           })}

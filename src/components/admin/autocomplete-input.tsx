@@ -233,7 +233,7 @@ export const AutocompleteInput = (
                 ) : (
                   <span className="text-muted-foreground">{placeholder}</span>
                 )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full max-w-(--radix-popover-trigger-width) p-0">
@@ -287,7 +287,7 @@ export const AutocompleteInput = (
                         >
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4",
+                              "me-2 h-4 w-4",
                               field.value === getChoiceValue(choice)
                                 ? "opacity-100"
                                 : "opacity-0",

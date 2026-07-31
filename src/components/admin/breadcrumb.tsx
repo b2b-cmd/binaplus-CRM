@@ -65,7 +65,7 @@ export const Breadcrumb = ({ children, ref }: BreadcrumbProps) => {
       <Separator
         decorative
         orientation="vertical"
-        className="data-[orientation=vertical]:h-4 mr-4"
+        className="data-[orientation=vertical]:h-4 me-4"
       />
       <BaseBreadcrumb ref={ref}>
         <BreadcrumbList>
@@ -77,7 +77,7 @@ export const Breadcrumb = ({ children, ref }: BreadcrumbProps) => {
                     <BreadcrumbEllipsis className="h-4 w-4" />
                   </DrawerTrigger>
                   <DrawerContent>
-                    <DrawerHeader className="text-left">
+                    <DrawerHeader className="text-start">
                       <DrawerTitle>
                         <Translate i18nKey="ra.navigation.breadcrumb_drawer_title">
                           Navigate to

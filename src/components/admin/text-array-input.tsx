@@ -132,7 +132,7 @@ export const TextArrayInput = (props: TextArrayInputProps) => {
               <Badge key={`${value}-${index}`} variant="outline">
                 {value}
                 <button
-                  className="ml-1 cursor-pointer rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="ms-1 cursor-pointer rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleRemoveValue(index);
@@ -169,7 +169,7 @@ export const TextArrayInput = (props: TextArrayInputProps) => {
               placeholder={values.length === 0 ? placeholder : undefined}
               disabled={disabled}
               readOnly={readOnly}
-              className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+              className="ms-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>

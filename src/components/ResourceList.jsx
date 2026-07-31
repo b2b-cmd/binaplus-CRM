@@ -101,7 +101,10 @@ function Body({ columns, rowPath, bulkActions }) {
   if (isPending) return <div className="empty"><span className="spinner" /></div>
   if (!data?.length) return <div className="card"><div className="empty">לא נמצאו רשומות.</div></div>
   return (
-    <div className="table-wrap">
+    // DataTable renders its own rounded/bordered container, so it is styled
+    // directly here instead of being nested in .table-wrap (which would draw a
+    // second border around it).
+    <div className="rl-table">
       <DataTable
         rowClick={rowPath ? (id, _r, record) => { nav(rowPath(record)); return false } : false}
         bulkActionButtons={bulkActions}

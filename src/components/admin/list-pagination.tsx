@@ -241,7 +241,7 @@ export const ListPagination = ({
                 onClick={pageChangeHandler(page + 1)}
                 size="default"
                 className={cn(
-                  "gap-1 px-2.5 sm:pr-2.5",
+                  "gap-1 px-2.5 sm:pe-2.5",
                   !hasNextPage ? "opacity-50 cursor-not-allowed" : "",
                 )}
                 aria-label={translate("ra.navigation.next", { _: "Next" })}

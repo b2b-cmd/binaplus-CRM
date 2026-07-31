@@ -371,7 +371,7 @@ export const FilterButton = (props: FilterButtonProps) => {
                 onClick={showRemoveSavedQueryDialog}
                 key={index}
               >
-                <BookmarkMinus className="h-4 w-4 mr-2" />
+                <BookmarkMinus className="h-4 w-4 me-2" />
                 {translate("ra.saved_queries.remove_label_with_name", {
                   _: 'Remove query "%{name}"',
                   name: savedQuery.label,
@@ -396,14 +396,14 @@ export const FilterButton = (props: FilterButtonProps) => {
                 }}
                 key={index}
               >
-                <Bookmark className="h-4 w-4 mr-2" />
+                <Bookmark className="h-4 w-4 me-2" />
                 {savedQuery.label}
               </DropdownMenuItem>
             ),
           )}
           {hasFilterValues && !hasSavedCurrentQuery && !disableSaveQuery && (
             <DropdownMenuItem onClick={showAddSavedQueryDialog}>
-              <BookmarkPlus className="h-4 w-4 mr-2" />
+              <BookmarkPlus className="h-4 w-4 me-2" />
               {translate("ra.saved_queries.new_label", {
                 _: "Save current query...",
               })}
@@ -416,7 +416,7 @@ export const FilterButton = (props: FilterButtonProps) => {
                 setOpen(false);
               }}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="h-4 w-4 me-2" />
               {translate("ra.action.remove_all_filters", {
                 _: "Remove all filters",
               })}
@@ -488,7 +488,7 @@ export const FilterButtonMenuItem = React.forwardRef<
       role="menuitemcheckbox"
       aria-checked={displayed}
     >
-      <div className="flex items-center justify-center w-4 h-4 mr-2">
+      <div className="flex items-center justify-center w-4 h-4 me-2">
         {displayed && <Check className="h-3 w-3" />}
       </div>
       <div>

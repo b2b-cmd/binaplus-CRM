@@ -54,7 +54,7 @@ export function UserMenu({ children }: UserMenuProps) {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="relative h-8 w-8 ml-2 rounded-full"
+            className="relative h-8 w-8 ms-2 rounded-full"
           >
             <Avatar className="h-8 w-8">
               <AvatarImage src={identity?.avatar} role="presentation" />

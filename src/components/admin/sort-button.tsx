@@ -114,8 +114,8 @@ const SortButtonComponent = (props: SortButtonProps) => {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-9" {...rest}>
             {icon}
-            <span className="ml-2">{buttonLabel}</span>
-            <ChevronDown className="ml-2 h-4 w-4" />
+            <span className="ms-2">{buttonLabel}</span>
+            <ChevronDown className="ms-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
       )}

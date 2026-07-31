@@ -269,7 +269,7 @@ const DataTableRow = ({
       className={cn(rowClick !== false && "cursor-pointer", className)}
     >
       {hasBulkActions ? (
-        <TableCell className="flex w-8" onClick={handleToggle}>
+        <TableCell className="w-8" onClick={handleToggle}>
           <Checkbox
             checked={selectedIds?.includes(record.id)}
             onClick={handleToggle}
@@ -384,11 +384,11 @@ function DataTableHeadCell<
               <Button
                 variant="ghost"
                 size="sm"
-                className="-ml-3 -mr-3 h-8 data-[state=open]:bg-accent cursor-pointer"
+                className="-ms-3 -me-3 h-8 data-[state=open]:bg-accent cursor-pointer"
                 data-field={source}
                 onClick={handleSort}
               >
-                {headerClassName?.includes("text-right") ? null : (
+                {headerClassName?.includes("text-end") ? null : (
                   <FieldTitle
                     label={label}
                     source={source}
@@ -397,12 +397,12 @@ function DataTableHeadCell<
                 )}
                 {sort.field === source ? (
                   sort.order === "ASC" ? (
-                    <ArrowDownAZ className="ml-2 h-6 w-6" />
+                    <ArrowDownAZ className="ms-2 h-6 w-6" />
                   ) : (
-                    <ArrowUpZA className="ml-2 h-6 w-6" />
+                    <ArrowUpZA className="ms-2 h-6 w-6" />
                   )
                 ) : null}
-                {headerClassName?.includes("text-right") ? (
+                {headerClassName?.includes("text-end") ? (
                   <FieldTitle
                     label={label}
                     source={source}
@@ -504,8 +504,8 @@ export function DataTableNumberColumn<
       source={source}
       {...rest}
       className={className}
-      headerClassName={cn("text-right", headerClassName)}
-      cellClassName={cn("text-right", cellClassName)}
+      headerClassName={cn("text-end", headerClassName)}
+      cellClassName={cn("text-end", cellClassName)}
     >
       <NumberField source={source} options={options} locales={locales} />
     </DataTableColumn>

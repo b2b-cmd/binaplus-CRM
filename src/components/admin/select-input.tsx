@@ -281,7 +281,7 @@ export const SelectInput = (props: SelectInputProps) => {
               {field.value && field.value !== emptyValue ? (
                 <div
                   role="button"
-                  className="p-0 ml-auto pointer-events-auto hover:bg-transparent text-muted-foreground opacity-50 hover:opacity-100"
+                  className="p-0 ms-auto pointer-events-auto hover:bg-transparent text-muted-foreground opacity-50 hover:opacity-100"
                   onClick={handleReset}
                 >
                   <X className="h-4 w-4" />

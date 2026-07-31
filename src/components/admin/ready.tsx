@@ -34,19 +34,19 @@ export const Ready = () => (
     <div className="flex h-[20vh] bg-zinc-100 text-black items-center justify-evenly">
       <div className="text-xl">
         <a href="https://marmelab.com/shadcn-admin-kit/docs">
-          <BookOpenText className="inline mr-4 w-10 h-10" />
+          <BookOpenText className="inline me-4 w-10 h-10" />
           Documentation
         </a>
       </div>
       <div className="text-xl">
         <a href="http://marmelab.com/shadcn-admin-kit/demo">
-          <ChevronsLeftRight className="inline mr-4 w-10 h-10" />
+          <ChevronsLeftRight className="inline me-4 w-10 h-10" />
           Demo
         </a>
       </div>
       <div className="text-xl">
         <a href="https://github.com/marmelab/shadcn-admin-kit">
-          <GitBranch className="inline mr-4 w-10 h-10" />
+          <GitBranch className="inline me-4 w-10 h-10" />
           GitHub
         </a>
       </div>

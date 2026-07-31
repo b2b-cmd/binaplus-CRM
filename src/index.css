@@ -169,11 +169,25 @@ table.grid tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border-
 table.grid tbody tr { transition: background 0.15s; }
 table.grid tbody tr:hover { background: var(--surface-2); }
 table.grid tbody tr.clickable { cursor: pointer; }
-table.grid .cell-edit {
-  border: 1px solid transparent; border-radius: var(--rx); padding: 5px 7px; margin: -5px -7px;
-  transition: var(--t); cursor: text; min-width: 60px;
+/* Click-to-edit affordance. Deliberately NOT scoped to table.grid: the shared
+   ResourceList renders the shadcn table, and scoping this rule was why edit
+   cells lost their hover outline after the framework move. */
+.cell-edit {
+  display: inline-block;
+  border: 1px solid transparent; border-radius: var(--rx); padding: 4px 7px; margin: -4px -7px;
+  transition: var(--t); cursor: text; min-width: 42px;
 }
-table.grid .cell-edit:hover { border-color: var(--border); background: var(--surface); }
+.cell-edit:hover { border-color: var(--border); background: var(--surface-2); }
+
+/* Shared list table (ResourceList -> ported shadcn DataTable). Gives it the
+   same surface, radius and sticky header the hand-rolled table.grid had, so
+   both table styles read as one system during the migration. */
+.rl-table > div { border-radius: var(--r); border-color: var(--border-soft); background: var(--surface); overflow: hidden; }
+.rl-table table { font-size: 0.9rem; }
+.rl-table thead th { position: sticky; top: 0; z-index: 2; border-bottom: 2px solid var(--border-soft); }
+.rl-table tbody td { border-bottom: 1px solid var(--border-soft); }
+.rl-table tbody tr:hover .cell-edit { border-color: var(--border-soft); }
+.rl-table .badge { white-space: nowrap; }
 
 /* ---------- Layout shell ---------- */
 .app { display: flex; min-height: 100vh; }

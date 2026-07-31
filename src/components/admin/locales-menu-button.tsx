@@ -50,7 +50,7 @@ export function LocalesMenuButton() {
           >
             {getNameForLocale(language.locale)}
             <Check
-              className={cn("ml-auto", locale !== language.locale && "hidden")}
+              className={cn("ms-auto", locale !== language.locale && "hidden")}
             />
           </DropdownMenuItem>
         ))}
