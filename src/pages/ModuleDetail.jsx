@@ -53,7 +53,7 @@ export default function ModuleDetail() {
   const lecturers = users.filter(u => lectLinks.includes(u.id))
   const related = [
     { key: 'cycles', label: 'מחזורים', count: cycles.length, rows: cycles, onOpen: r => `/cycles/${r.id}`, columns: [{ label: 'מחזור', get: r => r.name }, { label: 'מוצר', get: r => r.product?.name || '-' }] },
-    { key: 'lessons', label: 'שיעורים', count: lessons.length, rows: lessons, onOpen: r => `/lessons/${r.id}`, columns: [{ label: '#', get: r => r.position }, { label: 'שיעור', get: r => r.name }] },
+    { key: 'lessons', resource: 'lessons', fk: 'module_id', recordId: id, label: 'שיעורים', count: lessons.length, rows: lessons, onOpen: r => `/lessons/${r.id}`, columns: [{ label: '#', get: r => r.position }, { label: 'שיעור', get: r => r.name }] },
   ]
 
   return (

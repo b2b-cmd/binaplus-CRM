@@ -173,6 +173,19 @@ function RelatedPanel({ r, nav }) {
      checkboxes, bulk actions, column show/hide/reorder, sorting and filters -
      everything the plain read-only table lacked. */
   if (r.resource && r.fk && r.recordId) {
+    /* Derive the list columns from the relation's existing `columns` config
+       when the page has not supplied a richer one. That means every relation
+       gets the full table without each of the nine detail pages having to
+       restate its columns in a second format. Derived columns carry no
+       `source`, so they are not sortable - a page can pass `listColumns`
+       with sources when sorting matters. */
+    const cols = r.listColumns || (r.columns || []).map((c, i) => ({
+      source: c.source || `c${i}`,
+      label: c.label,
+      render: c.get,
+      csv: c.get,
+      sortable: false,
+    }))
     return (
       <div className="mt-3">
         <ResourceList
@@ -181,7 +194,7 @@ function RelatedPanel({ r, nav }) {
           filter={{ [r.fk]: r.recordId }}
           sort={r.sort || { field: 'created_at', order: 'DESC' }}
           perPage={r.perPage || 10}
-          columns={r.listColumns}
+          columns={cols}
           presets={r.presets}
           facets={r.facets}
           search={r.search ?? false}

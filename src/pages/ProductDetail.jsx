@@ -39,13 +39,13 @@ export default function ProductDetail() {
 
   const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.deal_amount || 0), 0)
   const related = [
-    { key: 'cycles', label: 'מחזורים', count: cycles.length, rows: cycles, onOpen: r => `/cycles/${r.id}`,
+    { key: 'cycles', resource: 'cycles', fk: 'product_id', recordId: id, label: 'מחזורים', count: cycles.length, rows: cycles, onOpen: r => `/cycles/${r.id}`,
       columns: [{ label: 'מחזור', get: r => r.name }, { label: 'התחלה', get: r => r.start_date ? new Date(r.start_date).toLocaleDateString('he-IL') : '-' }] },
-    { key: 'lessons', label: 'שיעורים', count: lessons.length, rows: lessons, onOpen: r => `/lessons/${r.id}`,
+    { key: 'lessons', resource: 'lessons', fk: 'product_id', recordId: id, label: 'שיעורים', count: lessons.length, rows: lessons, onOpen: r => `/lessons/${r.id}`,
       columns: [{ label: '#', get: r => r.number }, { label: 'שיעור', get: r => r.name }, { label: 'סוג', get: r => r.type }] },
-    { key: 'students', label: 'תלמידים', count: students.length, rows: students, onOpen: r => `/people/${r.id}`,
+    { key: 'students', resource: 'people', fk: 'product_id', recordId: id, label: 'תלמידים', count: students.length, rows: students, onOpen: r => `/people/${r.id}`,
       columns: [{ label: 'שם', get: r => r.full_name }, { label: 'טלפון', get: r => <span dir="ltr">{r.phone || '-'}</span> }] },
-    { key: 'orders', label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`,
+    { key: 'orders', resource: 'orders', fk: 'product_id', recordId: id, label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`,
       columns: [{ label: 'לקוח', get: r => r.person?.full_name || '-' }, { label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
   ]
 

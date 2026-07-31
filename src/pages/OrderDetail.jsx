@@ -52,7 +52,7 @@ export default function OrderDetail() {
   const related = [
     o.person && { key: 'person', label: 'לקוח', count: 1, rows: [o.person], onOpen: r => `/people/${r.id}`, columns: [{ label: 'שם', get: r => r.full_name }] },
     o.opportunity && { key: 'opp', label: 'הזדמנות', count: 1, rows: [o.opportunity], onOpen: r => `/opportunities/${r.id}`, columns: [{ label: 'הזדמנות', get: () => 'פתח' }] },
-    { key: 'pay', label: 'תשלומים', count: payments.length, rows: payments, onOpen: r => `/payments/${r.id}`, columns: [{ label: 'אמצעי', get: r => r.payment_type }, { label: 'סכום', get: r => money(r.amount_incl_vat) }] },
+    { key: 'pay', resource: 'payments', fk: 'order_id', recordId: id, label: 'תשלומים', count: payments.length, rows: payments, onOpen: r => `/payments/${r.id}`, columns: [{ label: 'אמצעי', get: r => r.payment_type }, { label: 'סכום', get: r => money(r.amount_incl_vat) }] },
   ].filter(Boolean)
 
   return (
