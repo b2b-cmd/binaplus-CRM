@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useRefresh, useListContext } from 'ra-core'
+import { useRefresh } from 'ra-core'
 import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
@@ -65,7 +65,11 @@ export default function People() {
         sort={{ field: 'created_at', order: 'DESC' }}
         columns={columns} presets={presets}
         search="שם / טלפון / מייל"
-        filtersUI={<RelationFilters opts={opts} />}
+        facets={[
+          { field: 'product_id', title: 'מוצר', options: productOpts },
+          { field: 'cycle_id', title: 'מחזור', options: cycleOpts },
+          { field: 'assigned_sales_rep', title: 'נציג', options: repOpts },
+        ]}
         rowPath={r => `/people/${r.id}`}
         bulkActions={<BulkDeleteButton />}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}
@@ -83,25 +87,6 @@ function Cell({ row, field, mode, options, display }) {
   return (
     <EditableCell row={row} table="people" field={field} mode={mode} options={options}
       display={display} onSaved={() => refresh()} />
-  )
-}
-
-function RelationFilters({ opts }) {
-  const { filterValues, setFilters } = useListContext()
-  const set = (k, v) => {
-    const next = { ...filterValues }
-    if (v) next[k] = v; else delete next[k]
-    setFilters(next, null, false)
-  }
-  return (
-    <>
-      <select className="input" style={{ width: 150 }} value={filterValues?.product_id || ''} onChange={e => set('product_id', e.target.value)}>
-        <option value="">כל המוצרים</option>{opts.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
-      <select className="input" style={{ width: 150 }} value={filterValues?.cycle_id || ''} onChange={e => set('cycle_id', e.target.value)}>
-        <option value="">כל המחזורים</option>{opts.cycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </select>
-    </>
   )
 }
 

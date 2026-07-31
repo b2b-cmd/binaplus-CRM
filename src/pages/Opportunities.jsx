@@ -52,7 +52,7 @@ export default function Opportunities() {
           resource="opportunities" storeKey="opp" exportName="opportunities"
           sort={{ field: 'created_at', order: 'DESC' }}
           columns={columns} search="חיפוש לפי לקוח / סוג"
-          filtersUI={toggle}
+          extra={toggle}
           rowPath={r => `/opportunities/${r.id}`}
           bulkActions={<BulkDeleteButton />}
           actions={createBtn}

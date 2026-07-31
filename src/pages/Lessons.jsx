@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useListContext } from 'ra-core'
 import { supabase } from '../lib/supabase'
 import { chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
@@ -37,13 +36,7 @@ export default function Lessons() {
       sort={{ field: 'number', order: 'ASC' }}
       columns={columns} presets={presets}
       search="חיפוש שיעור / תוכן"
-      filtersUI={<CountLabel />}
       rowPath={r => `/lessons/${r.id}`}
     />
   )
-}
-
-function CountLabel() {
-  const { total, isPending } = useListContext()
-  return <span className="muted small">{isPending ? '' : `${total ?? 0} שיעורים`}</span>
 }

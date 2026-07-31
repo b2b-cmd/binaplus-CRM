@@ -8,6 +8,9 @@ import { TICKET_STATUS, URGENCY, CHANNEL, TICKET_STATUS_OPEN, TICKET_TYPES, chip
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
 import EditableCell from '../components/EditableCell'
+import { Button } from '../components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Save } from 'lucide-react'
 import Icon from '../components/Icon'
 
 export default function Tickets() {
@@ -79,7 +82,14 @@ export default function Tickets() {
         filterDefault={{ 'status@in': TICKET_STATUS_OPEN }}
         columns={columns} presets={presets}
         search="חיפוש (נושא / תיאור)"
-        filtersUI={<TicketFilters typeOpts={typeOpts} moduleOpts={moduleOpts} cycleOpts={cycleOpts} repOpts={repOpts} urgencyOpts={urgencyOpts} views={views} setViews={setViews} rep={rep} />}
+        facets={[
+          { field: 'type', title: 'סוג', options: typeOpts },
+          { field: 'urgency', title: 'דחיפות', options: urgencyOpts },
+          { field: 'assigned_rep', title: 'נציג', options: repOpts },
+          { field: 'module_id', title: 'מודול', options: moduleOpts },
+          { field: 'cycle_id', title: 'מחזור', options: cycleOpts },
+        ]}
+        extra={<SavedViews views={views} setViews={setViews} rep={rep} />}
         rowPath={r => `/tickets/${r.id}`}
         bulkActions={<TicketBulk statusOpts={statusOpts} repOpts={repOpts} />}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> פנייה חדשה</button>}
@@ -96,17 +106,11 @@ function Cell({ row, field, mode, options, display, placeholder }) {
     display={display} placeholder={placeholder} onSaved={() => refresh()} />
 }
 
-/* Advanced filters + saved views, both driven by the same ra filter state
-   so a saved view and a manual filter can never disagree. */
-function TicketFilters({ typeOpts, moduleOpts, cycleOpts, repOpts, urgencyOpts, views, setViews, rep }) {
+/* Saved views. The field filters themselves are now faceted popovers in the
+   shared toolbar, so this only stores and restores a whole filter set. */
+function SavedViews({ views, setViews, rep }) {
   const { filterValues, setFilters } = useListContext()
-  const [open, setOpen] = useState(false)
-  const set = (k, v) => {
-    const next = { ...filterValues }
-    if (v) next[k] = v; else delete next[k]
-    setFilters(next, null, false)
-  }
-  const saveView = async () => {
+  const save = async () => {
     const name = prompt('שם התצוגה:')
     if (!name) return
     const { data } = await supabase.from('saved_views')
@@ -115,47 +119,21 @@ function TicketFilters({ typeOpts, moduleOpts, cycleOpts, repOpts, urgencyOpts, 
   }
   return (
     <>
-      <button className={`chip ${open ? 'active' : ''}`} onClick={() => setOpen(o => !o)}><Icon name="filter" size={15} /> סינון מתקדם</button>
       {views.length > 0 && (
-        <select className="input" style={{ width: 160 }} value="" onChange={e => {
-          const v = views.find(x => x.id === e.target.value)
+        <Select onValueChange={id => {
+          const v = views.find(x => String(x.id) === String(id))
           if (v) setFilters(v.filters || {}, null, false)
         }}>
-          <option value="">תצוגות שמורות…</option>
-          {views.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-        </select>
+          <SelectTrigger className="h-9 w-40"><SelectValue placeholder="תצוגות שמורות" /></SelectTrigger>
+          <SelectContent>
+            {views.map(v => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       )}
-      <button className="btn ghost sm" onClick={saveView}><Icon name="save" size={15} /> שמור תצוגה</button>
-      {open && (
-        <div className="card" style={{ padding: 16, marginTop: 12, width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 12 }}>
-            <Fl label="סוג פנייה" value={filterValues?.type} onChange={v => set('type', v)} options={typeOpts} />
-            <Fl label="מודול" value={filterValues?.module_id} onChange={v => set('module_id', v)} options={moduleOpts} />
-            <Fl label="מחזור" value={filterValues?.cycle_id} onChange={v => set('cycle_id', v)} options={cycleOpts} />
-            <Fl label="נציג מטפל" value={filterValues?.assigned_rep} onChange={v => set('assigned_rep', v)} options={repOpts} />
-            <Fl label="דחיפות" value={filterValues?.urgency} onChange={v => set('urgency', v)} options={urgencyOpts} />
-            <div className="field" style={{ margin: 0 }}><label>מתאריך</label>
-              <input type="date" value={filterValues?.['created_at@gte'] || ''} onChange={e => set('created_at@gte', e.target.value)} /></div>
-            <div className="field" style={{ margin: 0 }}><label>עד תאריך</label>
-              <input type="date" value={filterValues?.['created_at@lte'] || ''} onChange={e => set('created_at@lte', e.target.value ? e.target.value + 'T23:59:59' : '')} /></div>
-            <div className="field" style={{ margin: 0, justifyContent: 'end' }}>
-              <button className="btn subtle sm" onClick={() => setFilters({}, null, false)}>ניקוי</button></div>
-          </div>
-        </div>
-      )}
+      <Button variant="outline" size="sm" className="h-9" onClick={save}>
+        <Save className="size-4" /> שמור תצוגה
+      </Button>
     </>
-  )
-}
-
-function Fl({ label, value, onChange, options }) {
-  return (
-    <div className="field" style={{ margin: 0 }}>
-      <label>{label}</label>
-      <select value={value || ''} onChange={e => onChange(e.target.value)}>
-        <option value="">הכול</option>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </div>
   )
 }
 

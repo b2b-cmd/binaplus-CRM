@@ -47,7 +47,7 @@ export default function Payments() {
         sort={{ field: 'created_at', order: 'DESC' }}
         columns={columns} presets={presets}
         search="חיפוש לפי לקוח"
-        filtersUI={<SumBadge />}
+        extra={<SumBadge />}
         rowPath={r => `/payments/${r.id}`}
         bulkActions={<BulkDeleteButton />}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}

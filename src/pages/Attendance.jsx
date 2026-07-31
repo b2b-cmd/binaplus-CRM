@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useListContext, useUpdate, useDelete, useRefresh } from 'ra-core'
+import { useUpdate, useDelete, useRefresh } from 'ra-core'
 import { supabase } from '../lib/supabase'
 import { chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
@@ -51,7 +51,7 @@ export default function Attendance() {
       sort={{ field: 'created_at', order: 'DESC' }}
       columns={columns} presets={presets}
       search={false}
-      filtersUI={<CycleFilter cycles={cycles} />}
+      facets={[{ field: 'cycle_id', title: 'מחזור', options: cycles.map(c => ({ value: c.id, label: c.name })) }]}
     />
   )
 }
@@ -80,18 +80,4 @@ function DeleteBtn({ row }) {
     del('attendance', { id: row.id, previousData: row }, { onSuccess: () => refresh() })
   }
   return <button className="btn subtle sm" style={{ color: 'var(--err)', padding: '4px 7px' }} onClick={click}><Icon name="trash" size={13} /></button>
-}
-
-function CycleFilter({ cycles }) {
-  const { filterValues, setFilters } = useListContext()
-  return (
-    <select className="input" style={{ width: 180 }} value={filterValues?.cycle_id || ''}
-      onChange={e => {
-        const next = { ...filterValues }
-        if (e.target.value) next.cycle_id = e.target.value; else delete next.cycle_id
-        setFilters(next, null, false)
-      }}>
-      <option value="">כל המחזורים</option>{cycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-    </select>
-  )
 }
