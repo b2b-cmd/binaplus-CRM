@@ -73,8 +73,8 @@ export default function CycleDetail() {
   const seatsLeft = c.seats_total != null ? c.seats_total - (reg + dep) : null
 
   const related = [
-    { key: 'students', label: 'תלמידים', count: activeStudents.length, rows: activeStudents, onOpen: r => `/people/${r.id}`, columns: [{ label: 'שם', get: r => r.full_name }, { label: 'טלפון', get: r => <span dir="ltr">{r.phone || '-'}</span> }, { label: 'סטטוס', get: r => <span className={`badge ${SALES_STATUS_META[r.sales_status]?.badge || 'gray'}`}>{SALES_STATUS_META[r.sales_status]?.label}</span> }] },
-    { key: 'orders', label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`, columns: [{ label: 'לקוח', get: r => r.person?.full_name || '-' }, { label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
+    { key: 'students', resource: 'people', fk: 'cycle_id', recordId: id, label: 'תלמידים', count: activeStudents.length, rows: activeStudents, onOpen: r => `/people/${r.id}`, columns: [{ label: 'שם', get: r => r.full_name }, { label: 'טלפון', get: r => <span dir="ltr">{r.phone || '-'}</span> }, { label: 'סטטוס', get: r => <span className={`badge ${SALES_STATUS_META[r.sales_status]?.badge || 'gray'}`}>{SALES_STATUS_META[r.sales_status]?.label}</span> }] },
+    { key: 'orders', resource: 'orders', fk: 'cycle_id', recordId: id, label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`, columns: [{ label: 'לקוח', get: r => r.person?.full_name || '-' }, { label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
   ]
 
   return (

@@ -36,7 +36,7 @@ export default function OpportunityDetail() {
 
   const related = [
     o.person && { key: 'person', label: 'לקוח', count: 1, rows: [o.person], onOpen: r => `/people/${r.id}`, columns: [{ label: 'שם', get: r => r.full_name }] },
-    { key: 'orders', label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`, columns: [{ label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
+    { key: 'orders', resource: 'orders', fk: 'opportunity_id', recordId: id, label: 'הזמנות', count: orders.length, rows: orders, onOpen: r => `/orders/${r.id}`, columns: [{ label: 'סכום', get: r => r.deal_amount ? `₪${r.deal_amount.toLocaleString()}` : '-' }, { label: 'סטטוס', get: r => <span className={`badge ${ORDER_STATUS[r.status]?.badge}`}>{ORDER_STATUS[r.status]?.label}</span> }] },
   ].filter(Boolean)
 
   return (
