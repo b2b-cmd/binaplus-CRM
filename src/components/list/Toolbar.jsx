@@ -43,7 +43,7 @@ export default function Toolbar({ presets, facets, search, actions, extra }) {
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="mb-4 flex w-full min-w-0 flex-wrap items-center gap-2">
       {search !== false && (
         <div className="relative">
           <Search className="text-muted-foreground pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2" />

@@ -136,3 +136,31 @@
 [data-slot="sidebar"] a:hover {
   color: inherit;
 }
+
+/* ---------- Switch thumb: direction-agnostic positioning ----------
+   The primitive moves its thumb with `translate-x-[calc(100%-2px)]`, which
+   fails here twice: the unchecked rule never took effect (the thumb measured
+   the same offset in both states, i.e. the toggle looked stuck), and
+   translate-x is a PHYSICAL axis, so even when it applies it pushes the thumb
+   the wrong way in RTL.
+
+   Absolute positioning on a LOGICAL inset is unambiguous: the thumb sits at
+   inline-start when off and inline-end when on, correct in both directions. */
+[data-slot="switch"] {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+[data-slot="switch"] [data-slot="switch-thumb"] {
+  translate: none !important;
+  transform: none !important;
+  position: absolute;
+  top: 50%;
+  margin: 0;
+  inset-inline-start: 2px;
+  transform: translateY(-50%) !important;
+  transition: inset-inline-start 0.18s ease, background-color 0.18s ease;
+}
+[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
+  inset-inline-start: calc(100% - 18px);
+}

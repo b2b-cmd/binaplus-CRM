@@ -5,6 +5,7 @@ import { loadOptions } from '../lib/api'
 import { ORDER_STATUS, chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
 import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
+import BulkEdit from '../components/list/BulkEdit'
 import RecordFormModal from '../components/RecordFormModal'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
@@ -58,7 +59,11 @@ export default function Orders() {
         search="חיפוש לפי לקוח"
         extra={<SumBadge />}
         rowPath={r => `/orders/${r.id}`}
-        bulkActions={<BulkDeleteButton />}
+        bulkActions={<><BulkEdit fields={[
+          { field: 'status', label: 'סטטוס', options: statusOpts },
+          { field: 'product_id', label: 'מוצר', options: productOpts },
+          { field: 'cycle_id', label: 'מחזור', options: cycleOpts },
+        ]} /><BulkDeleteButton /></>}
         actions={<button className="btn sm" onClick={() => setShowNew(true)}><Icon name="plus" size={15} /> חדש</button>}
       />
       {showNew && <RecordFormModal type="order" onClose={() => setShowNew(false)} onCreated={row => nav(`/orders/${row.id}`)} />}

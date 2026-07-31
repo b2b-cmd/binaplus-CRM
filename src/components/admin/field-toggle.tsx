@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FieldTitle, useResourceContext } from "ra-core";
 import { GripVertical } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 /**
@@ -134,7 +134,12 @@ export const FieldToggle = (props: FieldToggleProps) => {
         htmlFor={`switch_${index}`}
         className="flex items-center gap-2 cursor-pointer"
       >
-        <Switch
+        {/* A Checkbox rather than the Switch primitive: the switch thumb did
+            not move between states here (it measured the same offset when
+            checked and unchecked), so the column list gave no usable feedback
+            about which columns were on. A checkbox is also the conventional
+            control for a multi-select list. */}
+        <Checkbox
           id={`switch_${index}`}
           checked={selected}
           onCheckedChange={onToggle}

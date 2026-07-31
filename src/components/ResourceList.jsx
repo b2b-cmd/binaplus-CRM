@@ -50,7 +50,7 @@ function Body({ columns, rowPath, bulkActions }) {
     // DataTable renders its own rounded/bordered container, so it is styled
     // directly here rather than nested in .table-wrap (which drew a second
     // border around it).
-    <div className="rl-table">
+    <div className="rl-table min-w-0">
       <DataTable
         rowClick={rowPath ? (id, _r, record) => { nav(rowPath(record)); return false } : false}
         bulkActionButtons={bulkActions}
