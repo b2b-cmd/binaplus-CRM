@@ -101,6 +101,11 @@
   a { color: var(--mp); text-decoration: none; }
   button { font-family: inherit; cursor: pointer; }
   input, select, textarea { font-family: inherit; }
+  /* A bare <textarea> falls back to its intrinsic `cols` width (~20 chars),
+     which produced tiny boxes floating inside full-width cards. Every
+     textarea in this app is meant to fill its container; the few that need a
+     fixed size set it explicitly and override this. */
+  textarea { width: 100%; }
 
   /* ---------- Buttons ---------- */
   .btn {
@@ -322,7 +327,10 @@
   /* ---------- Activity feed (notes / tasks) - premium composer + cards ---------- */
   .feed-composer { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 15px; margin-bottom: 16px; box-shadow: var(--sh1); transition: var(--t); }
   .feed-composer:focus-within { border-color: var(--lp); box-shadow: 0 0 0 3px var(--xlp); }
-  .feed-composer textarea { min-height: 62px; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 10px 12px; font-size: 0.9rem; line-height: 1.55; resize: vertical; transition: var(--t); }
+  /* width:100% is essential: without it a bare <textarea> falls back to its
+     intrinsic `cols` width (~20 chars), which rendered the note box as a tiny
+     rectangle floating in a full-width card. */
+  .feed-composer textarea { width: 100%; min-height: 96px; display: block; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--rs); padding: 10px 12px; font-size: 0.9rem; line-height: 1.55; resize: vertical; transition: var(--t); }
   .feed-composer textarea:focus { background: var(--surface); border-color: var(--lp); }
   .feed-footer { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .feed-attach { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--mp); background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--rs); padding: 0 13px; transition: var(--t); }
