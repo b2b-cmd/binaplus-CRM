@@ -6,7 +6,7 @@ import { draftReply } from '../lib/ai'
 import { sendEmailReply } from '../lib/email'
 import { toast } from '../components/Toaster'
 import { useAuthStore } from '../stores/authStore'
-import { TICKET_STATUS, URGENCY, CHANNEL, TICKET_TYPES } from '../lib/constants'
+import { TICKET_STATUS, URGENCY, CHANNEL, TICKET_TYPES, SALES_STATUS_META } from '../lib/constants'
 import CloudChatEmbed from '../components/CloudChatEmbed'
 import EmailMessage from '../components/EmailMessage'
 import ReplyComposer from '../components/ReplyComposer'
@@ -241,7 +241,9 @@ export default function TicketDetail() {
             <Detail label="טלפון" value={t.person?.phone} ltr />
             <Detail label="מייל" value={t.person?.email} ltr />
             <Detail label="מחזור" value={t.cycle?.name} />
-            <Detail label="סטטוס מכירתי" value={t.person?.sales_status} />
+            <Detail label="סטטוס מכירתי" value={t.person?.sales_status
+              ? <span className={`badge ${SALES_STATUS_META[t.person.sales_status]?.badge || 'gray'}`}>{SALES_STATUS_META[t.person.sales_status]?.label || t.person.sales_status}</span>
+              : null} />
             {t.person?.id && <button className="btn ghost sm block" style={{ marginTop: 8 }} onClick={() => nav(`/people/${t.person.id}`)}>לכרטיס התלמיד</button>}
             {t.person?.cloudchat_id && <div style={{ marginTop: 8 }}><CloudChatEmbed cloudchatId={t.person.cloudchat_id} compact /></div>}
           </div>

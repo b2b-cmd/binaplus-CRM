@@ -365,3 +365,27 @@ table.grid tbody tr.clickable { cursor: pointer; }
   .sidebar.open { transform: translateX(0); }
   .content { padding: 16px; }
 }
+
+/* ---------- Native selects, matched to the shadcn trigger ----------
+   ~28 native <select> elements remain across record screens, modals and
+   Settings. Rather than rewrite every call site, they are styled to match
+   the shadcn Select trigger so the app reads as one system: same height,
+   radius, border and focus ring, with the default OS arrow replaced by the
+   same chevron shadcn draws. The arrow is inlined as a data: URI because a
+   strict CSP blocks external requests. */
+select.input, .field select {
+  appearance: none; -webkit-appearance: none;
+  padding-block: 0; height: 36px; line-height: 36px;
+  padding-inline-start: 12px; padding-inline-end: 32px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239a93a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  cursor: pointer;
+}
+:root[data-theme="dark"] select.input, :root[data-theme="dark"] .field select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23877da2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+/* In RTL the chevron belongs on the left edge, which `left` already gives us;
+   an explicit dir=ltr field flips it back to the right. */
+[dir="ltr"] select.input, [dir="ltr"] .field select { background-position: right 10px center; }
+select.input:hover, .field select:hover { border-color: var(--lp); }
