@@ -110,7 +110,12 @@
   --sidebar-foreground: #ffffff;
   --sidebar-primary: var(--mp2);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent-color: rgba(255, 255, 255, 0.08);
+  /* NOTE the name: shadcn's sidebar reads --sidebar-accent as the hover/active
+     BACKGROUND, while the legacy stylesheet defines --sidebar-accent as a dim
+     purple TEXT colour. Without this override the legacy value leaked through
+     and nav items rendered at 2.65:1 contrast. */
+  --sidebar-accent: rgba(255, 255, 255, 0.10);
+  --sidebar-accent-color: rgba(255, 255, 255, 0.10);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.10);
   --sidebar-ring: var(--mp2);
@@ -122,4 +127,12 @@
    converted to logical properties as each screen is migrated. */
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
+}
+
+/* The legacy sheet styles every <a> with the brand purple. Nav links are
+   NavLinks (<a>), so on the dark sidebar they rendered purple-on-purple at
+   2.65:1. Colour there must come from the sidebar's own foreground token. */
+[data-slot="sidebar"] a,
+[data-slot="sidebar"] a:hover {
+  color: inherit;
 }

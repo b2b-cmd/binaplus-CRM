@@ -33,7 +33,10 @@ window.__audit = function () {
     const cs = getComputedStyle(el)
     const ps = parseFloat(cs.paddingInlineStart) || 0
     const pe = parseFloat(cs.paddingInlineEnd) || 0
-    const label = (el.innerText || '').trim()
+    // sr-only labels are not visible text, so an icon-only control that
+    // carries one (e.g. the sidebar trigger) must not count as "has a label".
+    const srOnly = el.querySelector('.sr-only')
+    const label = ((el.innerText || '').replace(srOnly?.textContent || '', '')).trim()
     // Icon-only controls legitimately have little padding. So do buttons that
     // wrap an already-padded child (e.g. a badge used as a toggle) - the
     // child supplies the breathing room, so this is not a defect.
@@ -87,11 +90,26 @@ window.__audit = function () {
   }
 
   // 6. Contrast (approximate: element colour vs nearest opaque ancestor background)
-  const lum = (c) => {
-    const m = c.match(/[\d.]+/g); if (!m) return null
-    const [r, g, b] = m.slice(0, 3).map(Number)
+  /* Resolve any CSS colour to RGB by painting it on a 1x1 canvas.
+     Naive regex parsing cannot handle the modern colour functions tailwind
+     emits for opacity utilities - `oklab(0.97 0.005 -0.007 / 0.6)` parsed as
+     if it were rgb() reported a 16:1 heading as 1.23:1, i.e. the scanner
+     invented contrast failures. Painting composites alpha correctly too. */
+  const cv = document.createElement('canvas'); cv.width = cv.height = 1
+  const cx = cv.getContext('2d', { willReadFrequently: true })
+  const toRGB = (col, under) => {
+    try {
+      cx.clearRect(0, 0, 1, 1)
+      if (under) { cx.fillStyle = under; cx.fillRect(0, 0, 1, 1) }
+      cx.fillStyle = col; cx.fillRect(0, 0, 1, 1)
+      const d = cx.getImageData(0, 0, 1, 1).data
+      return [d[0], d[1], d[2]]
+    } catch { return null }
+  }
+  const lum = (c, under) => {
+    const rgb = toRGB(c, under); if (!rgb) return null
     const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4) }
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+    return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2])
   }
   const bgOf = (el) => {
     let n = el
@@ -106,7 +124,7 @@ window.__audit = function () {
     if (!visible(el) || el.children.length) return
     const txt = (el.innerText || '').trim(); if (txt.length < 3) return
     const cs = getComputedStyle(el)
-    const l1 = lum(cs.color), l2 = lum(bgOf(el))
+    const l1 = lum(cs.color, bgOf(el)), l2 = lum(bgOf(el), 'rgb(255,255,255)')
     if (l1 == null || l2 == null) return
     const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
     const size = parseFloat(cs.fontSize), bold = parseInt(cs.fontWeight) >= 700
