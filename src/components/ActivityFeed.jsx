@@ -141,7 +141,7 @@ export default function ActivityFeed({ objectType, recordId }) {
             <div key={n.id} className="feed-item">
               <div className="feed-meta">
                 <div className="avatar" style={{ width: 22, height: 22, fontSize: '0.62rem' }}>{(n.author_user?.full_name || '?').slice(0, 2)}</div>
-                <b style={{ color: 'var(--dp)', fontSize: '0.82rem' }}>{n.author_user?.full_name || 'נציג'}</b>
+                <b style={{ color: 'var(--heading)', fontSize: '0.82rem' }}>{n.author_user?.full_name || 'נציג'}</b>
                 <span className="muted small">· {new Date(n.created_at).toLocaleString('he-IL')}</span>
                 <div className="spacer" />
                 {(n.author === rep?.id || isManager) && <button className="link-btn" style={{ color: 'var(--err)' }} onClick={() => delItem(n)}><Icon name="x" size={12} /></button>}
@@ -152,7 +152,7 @@ export default function ActivityFeed({ objectType, recordId }) {
               {repliesOf(n.id).map(r => (
                 <div key={r.id} className="feed-reply">
                   <div>
-                    <div className="feed-meta"><b style={{ color: 'var(--dp)', fontSize: '0.78rem' }}>{r.author_user?.full_name || 'נציג'}</b><span className="muted small">· {new Date(r.created_at).toLocaleString('he-IL')}</span>{(r.author === rep?.id || isManager) && <><div className="spacer" /><button className="link-btn" style={{ color: 'var(--err)' }} onClick={() => delItem(r)}><Icon name="x" size={11} /></button></>}</div>
+                    <div className="feed-meta"><b style={{ color: 'var(--heading)', fontSize: '0.78rem' }}>{r.author_user?.full_name || 'נציג'}</b><span className="muted small">· {new Date(r.created_at).toLocaleString('he-IL')}</span>{(r.author === rep?.id || isManager) && <><div className="spacer" /><button className="link-btn" style={{ color: 'var(--err)' }} onClick={() => delItem(r)}><Icon name="x" size={11} /></button></>}</div>
                     <div className="feed-body" style={{ fontSize: '0.82rem' }}>{r.body}</div>
                   </div>
                 </div>
