@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Save } from 'lucide-react'
 import Icon from '../components/Icon'
 import { promptDialog } from '../components/Dialogs'
+import UserAvatar from '../components/UserAvatar'
 
 export default function Tickets() {
   const nav = useNavigate()
@@ -60,7 +61,8 @@ export default function Tickets() {
     { source: 'channel', label: 'ערוץ', csv: r => CHANNEL[r.channel]?.label,
       render: r => <span className="row small" style={{ gap: 5 }}><Icon name={CHANNEL[r.channel]?.icon || 'edit'} size={13} style={{ color: 'var(--mp)' }} /> {CHANNEL[r.channel]?.label}</span> },
     { source: 'assigned_rep', label: 'נציג', csv: r => r.assignee?.full_name,
-      render: r => <Cell row={r} field="assigned_rep" mode="select" options={repOpts} display={() => r.assignee?.full_name || '-'} /> },
+      render: r => <Cell row={r} field="assigned_rep" mode="select" options={repOpts}
+        display={() => r.assignee ? <UserAvatar user={r.assignee} /> : '-'} /> },
     { source: 'urgency', label: 'דחיפות', csv: r => URGENCY[r.urgency]?.label,
       render: r => <Cell row={r} field="urgency" mode="select" options={urgencyOpts}
         display={v => <span className={`badge ${URGENCY[v]?.badge || 'gray'}`}>{URGENCY[v]?.label || '-'}</span>} /> },

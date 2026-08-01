@@ -13,6 +13,7 @@ import Attachment from './Attachment'
 import { toast } from './Toaster'
 import Icon from './Icon'
 import { confirmDialog } from './Dialogs'
+import UserAvatar from './UserAvatar'
 
 // local YYYY-MM-DD (avoid toISOString UTC shift that rolls the date back in +UTC zones)
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -45,7 +46,7 @@ export default function ActivityFeed({ objectType, recordId }) {
 
   const load = async () => {
     const [{ data: a }, { data: t }, o] = await Promise.all([
-      supabase.from('activities').select('*, author_user:users!activities_author_fkey(full_name)').eq('object_type', objectType).eq('record_id', recordId).order('created_at', { ascending: false }),
+      supabase.from('activities').select('*, author_user:users!activities_author_fkey(id,full_name,avatar_url,avatar_hue)').eq('object_type', objectType).eq('record_id', recordId).order('created_at', { ascending: false }),
       supabase.from('tasks').select('*, assignee_user:users!tasks_assignee_fkey(full_name)').eq('object_type', objectType).eq('record_id', recordId).order('created_at', { ascending: false }),
       loadOptions(),
     ])
@@ -80,7 +81,7 @@ export default function ActivityFeed({ objectType, recordId }) {
     }
     const { data, error } = await supabase.from('activities')
       .insert({ object_type: objectType, record_id: recordId, kind, author: rep?.id, body: text.trim() || null, file_url, file_name, file_type, file_size })
-      .select('*, author_user:users!activities_author_fkey(full_name)').single()
+      .select('*, author_user:users!activities_author_fkey(id,full_name,avatar_url,avatar_hue)').single()
     if (error) { toast(`שמירת ההערה נכשלה: ${error.message || ''}`, 'err'); setBusy(false); return }
     if (data) { setItems(x => [data, ...x]); setText(''); setFile(null); if (fileRef.current) fileRef.current.value = '' }
     setBusy(false)
@@ -88,7 +89,7 @@ export default function ActivityFeed({ objectType, recordId }) {
   const addReply = async (parent) => {
     if (!replyText.trim()) return
     setBusy(true)
-    const { data } = await supabase.from('activities').insert({ object_type: objectType, record_id: recordId, kind: 'note', author: rep?.id, body: replyText.trim(), parent_id: parent.id }).select('*, author_user:users!activities_author_fkey(full_name)').single()
+    const { data } = await supabase.from('activities').insert({ object_type: objectType, record_id: recordId, kind: 'note', author: rep?.id, body: replyText.trim(), parent_id: parent.id }).select('*, author_user:users!activities_author_fkey(id,full_name,avatar_url,avatar_hue)').single()
     if (data) { setItems(x => [...x, data]); setReplyText(''); setReplyTo(null) }
     setBusy(false)
   }
@@ -175,7 +176,7 @@ export default function ActivityFeed({ objectType, recordId }) {
           {topNotes.map(n => (
             <div key={n.id} className="bg-muted/30 rounded-lg border p-3">
               <div className="flex items-center gap-2">
-                <Avatar className="size-6"><AvatarFallback className="bg-primary text-primary-foreground text-[0.6rem]">{(n.author_user?.full_name || '?').slice(0, 2)}</AvatarFallback></Avatar>
+                <UserAvatar user={n.author_user} size="sm" />
                 <b style={{ color: 'var(--heading)', fontSize: '0.82rem' }}>{n.author_user?.full_name || 'נציג'}</b>
                 <span className="text-muted-foreground text-xs">· {new Date(n.created_at).toLocaleString('he-IL')}</span>
                 {(n.author === rep?.id || isManager) && <Button variant="ghost" size="icon" className="ms-auto size-6 text-[var(--err)]" onClick={() => delItem(n)}><Icon name="x" size={12} /></Button>}

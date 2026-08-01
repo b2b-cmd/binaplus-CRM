@@ -9,6 +9,7 @@ import BulkEdit from '../components/list/BulkEdit'
 import RecordFormModal from '../components/RecordFormModal'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
+import UserAvatar from '../components/UserAvatar'
 
 const statusOpts = Object.entries(OPP_STATUS).map(([value, m]) => ({ value, label: m.label }))
 const typeOpts = TRAINING_TYPES.map(t => ({ value: t, label: t }))
@@ -30,7 +31,7 @@ export default function Opportunities() {
         display={v => <span className="badge mp">{v || '-'}</span>} /> },
     { source: 'owner', label: 'נציג', csv: r => r.owner_user?.full_name,
       render: r => <Cell row={r} field="owner" mode="select" options={repOpts}
-        display={() => r.owner_user?.full_name || '-'} /> },
+        display={() => r.owner_user ? <UserAvatar user={r.owner_user} /> : '-'} /> },
     { source: 'created_at', label: 'נוצר', csv: r => new Date(r.created_at).toLocaleDateString('he-IL'),
       render: r => <span className="small">{new Date(r.created_at).toLocaleDateString('he-IL')}</span> },
     { source: 'status', label: 'סטטוס', csv: r => OPP_STATUS[r.status]?.label,
