@@ -9,6 +9,8 @@ import { Textarea } from './ui/textarea'
 import { Input } from './ui/input'
 import { Avatar, AvatarFallback } from './ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import Attachment from './Attachment'
+import { toast } from './Toaster'
 import Icon from './Icon'
 
 // local YYYY-MM-DD (avoid toISOString UTC shift that rolls the date back in +UTC zones)
@@ -55,13 +57,30 @@ export default function ActivityFeed({ objectType, recordId }) {
     if (!text.trim() && !file) return
     setBusy(true)
     let file_url = null, kind = 'note'
+    let file_name = null, file_type = null, file_size = null
     if (file) {
+      // Storage keys must be ASCII, so the original (often Hebrew) filename is
+      // kept on the row instead of being encoded into the path.
       const ext = (file.name.match(/\.[a-z0-9]{1,8}$/i) || [''])[0]
-      const path = `${objectType}/${recordId}/${Date.now()}${ext}` // ASCII-safe key
+      const path = `${objectType}/${recordId}/${Date.now()}${ext}`
       const { error } = await supabase.storage.from('attachments').upload(path, file)
-      if (!error) { file_url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl; kind = 'file' }
+      if (error) {
+        // Never save the note as if the file had been attached - that is how
+        // attachments silently disappeared.
+        setBusy(false)
+        toast(`העלאת הקובץ נכשלה: ${error.message || ''}`, 'err')
+        return
+      }
+      file_url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl
+      kind = 'file'
+      file_name = file.name
+      file_type = file.type || null
+      file_size = file.size ?? null
     }
-    const { data } = await supabase.from('activities').insert({ object_type: objectType, record_id: recordId, kind, author: rep?.id, body: text.trim() || null, file_url }).select('*, author_user:users!activities_author_fkey(full_name)').single()
+    const { data, error } = await supabase.from('activities')
+      .insert({ object_type: objectType, record_id: recordId, kind, author: rep?.id, body: text.trim() || null, file_url, file_name, file_type, file_size })
+      .select('*, author_user:users!activities_author_fkey(full_name)').single()
+    if (error) { toast(`שמירת ההערה נכשלה: ${error.message || ''}`, 'err'); setBusy(false); return }
     if (data) { setItems(x => [data, ...x]); setText(''); setFile(null); if (fileRef.current) fileRef.current.value = '' }
     setBusy(false)
   }
@@ -161,7 +180,7 @@ export default function ActivityFeed({ objectType, recordId }) {
                 {(n.author === rep?.id || isManager) && <Button variant="ghost" size="icon" className="ms-auto size-6 text-[var(--err)]" onClick={() => delItem(n)}><Icon name="x" size={12} /></Button>}
               </div>
               {n.body && <div className="mt-1.5 text-sm whitespace-pre-wrap">{n.body}</div>}
-              {n.file_url && <a className="small" href={n.file_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', gap: 4, marginTop: 4 }}><Icon name="link" size={12} /> קובץ מצורף</a>}
+              {n.file_url && <Attachment url={n.file_url} name={n.file_name} size={n.file_size} />}
 
               {repliesOf(n.id).map(r => (
                 <div key={r.id} className="border-border mt-2 border-s-2 ps-3">
