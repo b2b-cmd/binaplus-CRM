@@ -7,6 +7,7 @@ import ResourceList from '../components/ResourceList'
 import EditableCell from '../components/EditableCell'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
+import { alertDialog, promptDialog } from '../components/Dialogs'
 
 const permOpts = Object.entries(PERMISSION_LEVELS).map(([value, label]) => ({ value, label }))
 const typeOpts = Object.entries(USER_TYPES).map(([value, label]) => ({ value, label }))
@@ -78,15 +79,15 @@ function ActiveToggle({ row }) {
 function ResetBtn({ row }) {
   const reset = async (e) => {
     e.stopPropagation()
-    const password = prompt(`סיסמה חדשה עבור ${row.full_name}:`)
+    const password = await promptDialog(`סיסמה חדשה עבור ${row.full_name}:`)
     if (!password) return
-    if (password.length < 6) return alert('סיסמה חייבת להיות לפחות 6 תווים')
+    if (password.length < 6) return await alertDialog('סיסמה חייבת להיות לפחות 6 תווים')
     const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch(`${FUNCTIONS_URL}/reset-password`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({ user_id: row.id, password }),
     })
-    alert(res.ok ? 'הסיסמה עודכנה בהצלחה' : 'איפוס הסיסמה נכשל')
+    await alertDialog(res.ok ? 'הסיסמה עודכנה בהצלחה' : 'איפוס הסיסמה נכשל')
   }
   return <button className="btn subtle sm" onClick={reset}>איפוס</button>
 }

@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/authStore'
 import { clearOptionsCache } from '../lib/api'
 import EditField from './EditField'
 import Icon from './Icon'
+import { confirmDialog } from './Dialogs'
 
 const EMPTY = { label: '', key: '', type: 'text', options: '', width: 1 }
 
@@ -44,7 +45,7 @@ export default function CustomFields({ objectType, recordId, table }) {
     })
     setNf(EMPTY); clearOptionsCache(); load()
   }
-  const delField = async (id) => { if (confirm('למחוק שדה מותאם?')) { await supabase.from('custom_fields').delete().eq('id', id); load() } }
+  const delField = async (id) => { if (await confirmDialog('למחוק שדה מותאם?')) { await supabase.from('custom_fields').delete().eq('id', id); load() } }
   const setWidth = async (id, width) => { await supabase.from('custom_fields').update({ width }).eq('id', id); load() }
   const startEdit = (d) => { setEditId(d.id); setEf({ label: d.label, options: (d.options || []).join(', ') }) }
   const saveEdit = async (d) => {

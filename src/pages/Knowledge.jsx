@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
 import Icon from '../components/Icon'
+import { confirmDialog } from '../components/Dialogs'
 
 const EMPTY = { topic: '', question: '', answer: '', module_id: '' }
 
@@ -29,7 +30,7 @@ export default function Knowledge() {
     setForm(EMPTY); setEditing(null); load()
   }
   const edit = (it) => { setEditing(it.id); setForm({ topic: it.topic || '', question: it.question || '', answer: it.answer || '', module_id: it.module_id || '' }) }
-  const remove = async (id) => { if (confirm('למחוק פריט ידע?')) { await supabase.from('knowledge_base').delete().eq('id', id); load() } }
+  const remove = async (id) => { if (await confirmDialog('למחוק פריט ידע?')) { await supabase.from('knowledge_base').delete().eq('id', id); load() } }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isManager ? '1fr 340px' : '1fr', gap: 16, alignItems: 'start' }}>

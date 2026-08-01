@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
 import RecordFormModal from '../components/RecordFormModal'
 import Icon from '../components/Icon'
+import { confirmDialog, alertDialog } from '../components/Dialogs'
 
 export default function Settings() {
   const [tab, setTab] = useState('appearance')
@@ -85,7 +86,7 @@ function ApiBackupTab() {
     setNewKey(key); setName(''); load()
   }
   const toggle = async (k) => { await supabase.from('api_keys').update({ active: !k.active }).eq('id', k.id); load() }
-  const delKey = async (id) => { if (confirm('למחוק מפתח?')) { await supabase.from('api_keys').delete().eq('id', id); load() } }
+  const delKey = async (id) => { if (await confirmDialog('למחוק מפתח?')) { await supabase.from('api_keys').delete().eq('id', id); load() } }
   const runBackup = async () => {
     setBusy(true)
     const { data: { session } } = await supabase.auth.getSession()
@@ -93,10 +94,10 @@ function ApiBackupTab() {
     setBusy(false); load()
   }
   const restore = async (path) => {
-    if (!confirm(`לשחזר את הרשומות למצב מ-${path}? (שחזור ממזג רשומות שהשתנו/נמחקו)`)) return
+    if (!await confirmDialog(`לשחזר את הרשומות למצב מ-${path}? (שחזור ממזג רשומות שהשתנו/נמחקו)`)) return
     const { data: { session } } = await supabase.auth.getSession()
     const r = await fetch(`${FUNCTIONS}/backup-nightly`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` }, body: JSON.stringify({ action: 'restore', path }) })
-    const j = await r.json(); alert(j.ok ? `שוחזרו ${j.restored} רשומות` : 'שגיאה בשחזור')
+    const j = await r.json(); await alertDialog(j.ok ? `שוחזרו ${j.restored} רשומות` : 'שגיאה בשחזור')
   }
 
   const scopeBox = (res, kind) => <label className="small" style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><input type="checkbox" checked={scopes[res][kind]} onChange={e => setScopes(s => ({ ...s, [res]: { ...s[res], [kind]: e.target.checked } }))} /> {kind === 'read' ? 'קריאה' : 'כתיבה'}</label>
@@ -183,7 +184,7 @@ function SchemaTab() {
     await supabase.from('custom_fields').insert({ object_type: obj, key: nf.key.trim(), label: nf.label.trim(), type: nf.type, options: nf.options ? nf.options.split(',').map(s => s.trim()).filter(Boolean) : [] })
     setNf({ key: '', label: '', type: 'text', options: '' }); load()
   }
-  const delField = async (id) => { if (confirm('למחוק שדה?')) { await supabase.from('custom_fields').delete().eq('id', id); load() } }
+  const delField = async (id) => { if (await confirmDialog('למחוק שדה?')) { await supabase.from('custom_fields').delete().eq('id', id); load() } }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>

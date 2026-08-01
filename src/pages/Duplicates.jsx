@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Icon from '../components/Icon'
+import { confirmDialog } from '../components/Dialogs'
 
 const digits = s => (s || '').replace(/\D/g, '')
 
@@ -31,7 +32,7 @@ export default function Duplicates() {
   useEffect(() => { scan() }, [])
 
   const merge = async (group) => {
-    if (!confirm(`למזג ${group.length} רשומות? הראשונה תישאר, השאר יאוחדו אליה.`)) return
+    if (!await confirmDialog(`למזג ${group.length} רשומות? הראשונה תישאר, השאר יאוחדו אליה.`)) return
     setBusy(group[0].id)
     const primary = group[0].id, dupes = group.slice(1).map(x => x.id)
     for (const tbl of ['tickets', 'orders', 'opportunities', 'payments']) {

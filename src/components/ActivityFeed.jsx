@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import Attachment from './Attachment'
 import { toast } from './Toaster'
 import Icon from './Icon'
+import { confirmDialog } from './Dialogs'
 
 // local YYYY-MM-DD (avoid toISOString UTC shift that rolls the date back in +UTC zones)
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -99,7 +100,7 @@ export default function ActivityFeed({ objectType, recordId }) {
     setBusy(false)
   }
   const toggleTask = async (t) => { await supabase.from('tasks').update({ status: t.status === 'open' ? 'done' : 'open' }).eq('id', t.id); setTasks(ts => ts.map(x => x.id === t.id ? { ...x, status: x.status === 'open' ? 'done' : 'open' } : x)) }
-  const delItem = async (i) => { if (confirm('למחוק?')) { await supabase.from('activities').delete().eq('id', i.id); setItems(x => x.filter(y => y.id !== i.id && y.parent_id !== i.id)) } }
+  const delItem = async (i) => { if (await confirmDialog('למחוק?')) { await supabase.from('activities').delete().eq('id', i.id); setItems(x => x.filter(y => y.id !== i.id && y.parent_id !== i.id)) } }
 
   const topNotes = items.filter(n => !n.parent_id)
   const repliesOf = (id) => items.filter(n => n.parent_id === id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))

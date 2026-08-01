@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
+import { promptDialog } from './Dialogs'
 
 // Feature flag: scheduled email sending is hidden (buggy, deprioritized 2026-07).
 // All the scheduling code below + the outbox/dispatch-outbox backend are kept intact -
@@ -19,7 +20,7 @@ export default function ReplyComposer({ onSend, sending, channel, kb = [], edito
   const [customAt, setCustomAt] = useState('')
 
   const exec = (cmd, val) => { ed.current?.focus(); document.execCommand(cmd, false, val) }
-  const addLink = () => { const url = prompt('כתובת הקישור:', 'https://'); if (url) exec('createLink', url) }
+  const addLink = async () => { const url = await promptDialog('כתובת הקישור:', 'https://'); if (url) exec('createLink', url) }
   const insertText = (t) => { ed.current.focus(); document.execCommand('insertText', false, t) }
 
   // expose an imperative API for injecting AI drafts etc.
