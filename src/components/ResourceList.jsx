@@ -54,6 +54,10 @@ function Body({ columns, rowPath, bulkActions }) {
       <DataTable
         rowClick={rowPath ? (id, _r, record) => { nav(rowPath(record)); return false } : false}
         bulkActionButtons={bulkActions}
+        /* Columns flagged `hidden` are declared but off by default, which is
+           what makes them ADDABLE from the columns menu - the selector can only
+           offer columns the table knows about. */
+        hiddenColumns={columns.filter(c => c.hidden).map(c => c.source || c.label)}
       >
         {columns.map(c => (
           <DataTable.Col key={c.source || c.label} source={c.sortable === false ? undefined : c.source}

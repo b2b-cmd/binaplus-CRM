@@ -69,6 +69,19 @@ export default function Tickets() {
     { source: 'status', label: 'סטטוס', csv: r => TICKET_STATUS[r.status]?.label,
       render: r => <Cell row={r} field="status" mode="select" options={statusOpts}
         display={v => <span className={`badge ${TICKET_STATUS[v]?.badge || 'gray'}`}>{TICKET_STATUS[v]?.label || '-'}</span>} /> },
+    /* Declared but hidden by default so they can be added from the columns menu. */
+    { source: 'description', label: 'תיאור', hidden: true, csv: r => r.description,
+      render: r => <span className="small">{(r.description || '-').slice(0, 60)}</span> },
+    { source: 'handled_by', label: 'טופל ע"י', hidden: true, csv: r => r.handled_by,
+      render: r => r.handled_by ? <span className="badge gray">{r.handled_by === 'ai' ? 'סוכן AI' : 'נציג'}</span> : '-' },
+    { source: 'csat_score', label: 'שביעות רצון', hidden: true, csv: r => r.csat_score,
+      render: r => r.csat_score ? <span className="badge ok">{r.csat_score}/5</span> : '-' },
+    { source: 'first_response_at', label: 'מענה ראשון', hidden: true, csv: r => r.first_response_at,
+      render: r => <span className="small muted">{r.first_response_at ? new Date(r.first_response_at).toLocaleDateString('he-IL') : '-'}</span> },
+    { source: 'resolved_at', label: 'נסגר בתאריך', hidden: true, csv: r => r.resolved_at,
+      render: r => <span className="small muted">{r.resolved_at ? new Date(r.resolved_at).toLocaleDateString('he-IL') : '-'}</span> },
+    { source: 'internal_notes', label: 'הערות פנימיות', hidden: true, csv: r => r.internal_notes,
+      render: r => <span className="small">{(r.internal_notes || '-').slice(0, 50)}</span> },
   ]
 
   const presets = [

@@ -43,6 +43,13 @@ export default function Orders() {
     { source: 'status', label: 'סטטוס', csv: r => ORDER_STATUS[r.status]?.label,
       render: r => <Cell row={r} field="status" mode="select" options={statusOpts}
         display={v => <span className={`badge ${ORDER_STATUS[v]?.badge || 'gray'}`}>{ORDER_STATUS[v]?.label || v}</span>} /> },
+    /* Declared but hidden by default so they can be added from the columns menu. */
+    { source: 'agreement_status', label: 'הסכם', hidden: true, csv: r => r.agreement_status,
+      render: r => <Cell row={r} field="agreement_status" display={v => v || '-'} /> },
+    { source: 'collection_notes', label: 'הערות גבייה', hidden: true, csv: r => r.collection_notes,
+      render: r => <span className="small">{(r.collection_notes || '-').slice(0, 50)}</span> },
+    { source: 'created_at', label: 'נוצר', hidden: true, csv: r => r.created_at,
+      render: r => <span className="small muted">{new Date(r.created_at).toLocaleDateString('he-IL')}</span> },
   ]
 
   const presets = [

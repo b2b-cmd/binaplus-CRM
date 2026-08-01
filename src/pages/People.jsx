@@ -48,6 +48,22 @@ export default function People() {
     { source: 'sales_status', label: 'סטטוס', csv: r => SALES_STATUS_META[r.sales_status]?.label,
       render: r => <Cell row={r} field="sales_status" mode="select" options={salesOpts}
         display={v => <span className={`badge ${SALES_STATUS_META[v]?.badge || 'gray'}`}>{SALES_STATUS_META[v]?.label || '-'}</span>} /> },
+    /* Declared but hidden by default: the columns menu can only offer columns
+       the table knows about, so these are what make "add a column" possible. */
+    { source: 'notes', label: 'הערות', hidden: true, csv: r => r.notes,
+      render: r => <Cell row={r} field="notes" display={v => v || '-'} /> },
+    { source: 'agreement_status', label: 'הסכם', hidden: true, csv: r => r.agreement_status,
+      render: r => <Cell row={r} field="agreement_status" display={v => v || '-'} /> },
+    { source: 'received_access', label: 'קיבל גישה', hidden: true, csv: r => r.received_access,
+      render: r => <Cell row={r} field="received_access" display={v => v || '-'} /> },
+    { source: 'added_to_group', label: 'נוסף לקבוצה', hidden: true, csv: r => r.added_to_group,
+      render: r => <Cell row={r} field="added_to_group" display={v => v || '-'} /> },
+    { source: 'manager_call', label: 'שיחת מנהל', hidden: true, csv: r => r.manager_call,
+      render: r => <Cell row={r} field="manager_call" display={v => v || '-'} /> },
+    { source: 'cloudchat_id', label: 'מזהה CloudChat', hidden: true, csv: r => r.cloudchat_id,
+      render: r => <span className="small" dir="ltr">{r.cloudchat_id || '-'}</span> },
+    { source: 'created_at', label: 'נוצר', hidden: true, csv: r => r.created_at,
+      render: r => <span className="small muted">{new Date(r.created_at).toLocaleDateString('he-IL')}</span> },
   ]
 
   const presets = [
