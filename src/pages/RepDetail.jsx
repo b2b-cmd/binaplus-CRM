@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { updateField, clearOptionsCache } from '../lib/api'
 import { PERMISSION_LEVELS, USER_TYPES, SALES_STATUS_META, ORDER_STATUS, OPP_STATUS } from '../lib/constants'
 import RecordLayout from '../components/RecordLayout'
+import AvatarUpload from '../components/AvatarUpload'
 import EditField from '../components/EditField'
 import { alertDialog, promptDialog } from '../components/Dialogs'
 
@@ -75,6 +76,7 @@ export default function RepDetail() {
       objectType="users" recordId={id} recordType="rep" record={u} related={related} feed={false}
       actions={[{ icon: 'shield', title: 'איפוס סיסמה', onClick: resetPassword }]}
     >
+      <AvatarUpload user={u} onChange={url => setU(x => ({ ...x, avatar_url: url }))} />
       <div className="card">
         <div className="kpi-grid" style={{ marginBottom: 16 }}>
           <div className="kpi"><div className="label">תלמידים / לידים</div><div className="value anta">{students.length}</div></div>

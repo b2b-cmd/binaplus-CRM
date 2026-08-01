@@ -10,6 +10,7 @@ import { BulkDeleteButton } from '../components/admin/bulk-delete-button'
 import BulkEdit from '../components/list/BulkEdit'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
+import UserAvatar from '../components/UserAvatar'
 
 const salesOpts = Object.entries(SALES_STATUS_META).map(([value, v]) => ({ value, label: v.label }))
 
@@ -43,7 +44,7 @@ export default function People() {
       render: r => <Cell row={r} field="entry_date" display={v => v ? new Date(v).toLocaleDateString('he-IL') : '-'} /> },
     { source: 'assigned_sales_rep', label: 'נציג', csv: r => r.rep?.full_name,
       render: r => <Cell row={r} field="assigned_sales_rep" mode="select" options={repOpts}
-        display={() => r.rep?.full_name || '-'} /> },
+        display={() => r.rep ? <UserAvatar user={r.rep} /> : '-'} /> },
     { source: 'sales_status', label: 'סטטוס', csv: r => SALES_STATUS_META[r.sales_status]?.label,
       render: r => <Cell row={r} field="sales_status" mode="select" options={salesOpts}
         display={v => <span className={`badge ${SALES_STATUS_META[v]?.badge || 'gray'}`}>{SALES_STATUS_META[v]?.label || '-'}</span>} /> },

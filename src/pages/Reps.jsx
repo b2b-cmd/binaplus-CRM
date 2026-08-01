@@ -8,6 +8,7 @@ import EditableCell from '../components/EditableCell'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
 import { alertDialog, promptDialog } from '../components/Dialogs'
+import UserAvatar from '../components/UserAvatar'
 
 const permOpts = Object.entries(PERMISSION_LEVELS).map(([value, label]) => ({ value, label }))
 const typeOpts = Object.entries(USER_TYPES).map(([value, label]) => ({ value, label }))
@@ -19,7 +20,7 @@ export default function Reps() {
 
   const columns = [
     { source: 'full_name', label: 'שם', csv: r => r.full_name,
-      render: r => <span style={{ fontWeight: 600, color: 'var(--mp)' }}>{r.full_name || '-'}</span> },
+      render: r => <UserAvatar user={r} size="md" showName className="font-semibold" /> },
     { source: 'email', label: 'מייל', csv: r => r.email,
       render: r => <span className="small" dir="ltr" style={{ textAlign: 'start' }}><Cell row={r} field="email" display={v => v || '-'} /></span> },
     { source: 'phone', label: 'טלפון', csv: r => r.phone,

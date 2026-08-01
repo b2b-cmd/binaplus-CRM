@@ -30,15 +30,15 @@ const SOFT_DELETE = new Set([
 /* PostgREST select strings, so a list can render related names
    (product, cycle, owner) without an extra round trip. */
 export const SELECTS = {
-  people: '*, product:products(id,name), cycle:cycles(id,name), rep:users!people_assigned_sales_rep_fkey(id,full_name)',
-  tickets: '*, person:people(id,full_name,phone,email), module:modules(id,name), cycle:cycles(id,name), assignee:users!tickets_assigned_rep_fkey(id,full_name)',
-  opportunities: '*, person:people(id,full_name), owner_user:users!opportunities_owner_fkey(id,full_name)',
+  people: '*, product:products(id,name), cycle:cycles(id,name), rep:users!people_assigned_sales_rep_fkey(id,full_name,avatar_url,avatar_hue)',
+  tickets: '*, person:people(id,full_name,phone,email), module:modules(id,name), cycle:cycles(id,name), assignee:users!tickets_assigned_rep_fkey(id,full_name,avatar_url,avatar_hue)',
+  opportunities: '*, person:people(id,full_name), owner_user:users!opportunities_owner_fkey(id,full_name,avatar_url,avatar_hue)',
   orders: '*, person:people(id,full_name), product:products(id,name), cycle:cycles(id,name)',
   payments: '*, order:orders(id), person:people(id,full_name)',
   cycles: '*, product:products(id,name)',
   lessons: '*, product:products(id,name), module:modules(id,name), lesson_lecturers(user:users(full_name))',
   attendance: '*, person:people(id,full_name), lesson:lessons(id,name,module:modules(name)), cycle:cycles(id,name)',
-  tasks: '*, assignee_user:users!tasks_assignee_fkey(id,full_name)',
+  tasks: '*, assignee_user:users!tasks_assignee_fkey(id,full_name,avatar_url,avatar_hue)',
   modules: '*, module_products(product:products(name)), module_lecturers(user:users(full_name))',
 }
 
