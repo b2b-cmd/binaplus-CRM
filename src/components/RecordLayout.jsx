@@ -8,6 +8,7 @@ import ActivityFeed from './ActivityFeed'
 import CustomFields from './CustomFields'
 import RecordFormModal from './RecordFormModal'
 import ResourceList from './ResourceList'
+import { confirmDialog } from './Dialogs'
 
 /* Each related object gets its own icon and hue, so the chips are
    distinguishable at a glance instead of nine identical pills.
@@ -49,13 +50,13 @@ export default function RecordLayout({ title, subtitle, status, backTo, actions 
     if (!def) return
     // users are never hard-deleted (auth + FK integrity) - deactivate instead
     if (def.deactivate) {
-      if (!confirm(`להשבית את ${def.labelOne} "${title}"? (ניתן להפעיל מחדש בכל עת)`)) return
+      if (!await confirmDialog(`להשבית את ${def.labelOne} "${title}"? (ניתן להפעיל מחדש בכל עת)`)) return
       const { error } = await supabase.from(def.table).update({ active: false }).eq('id', recordId)
       if (error) return toast('ההשבתה נכשלה', 'err')
       toast('הושבת')
       return nav(backTo || def.listPath || '/')
     }
-    if (!confirm(`למחוק ${def.labelOne} "${title}"? ${def.softDelete ? '(ניתן לשחזר מסל המיחזור)' : ''}`)) return
+    if (!await confirmDialog(`למחוק ${def.labelOne} "${title}"? ${def.softDelete ? '(ניתן לשחזר מסל המיחזור)' : ''}`)) return
     if (def.softDelete) {
       const { error } = await supabase.from(def.table).update({ deleted_at: new Date().toISOString() }).eq('id', recordId)
       if (error) return toast('המחיקה נכשלה', 'err')

@@ -6,6 +6,7 @@ import { chipColor } from '../lib/constants'
 import ResourceList from '../components/ResourceList'
 import EditableCell from '../components/EditableCell'
 import Icon from '../components/Icon'
+import { confirmDialog } from '../components/Dialogs'
 
 export default function Attendance() {
   const nav = useNavigate()
@@ -74,9 +75,9 @@ function NotesCell({ row }) {
 function DeleteBtn({ row }) {
   const [del] = useDelete()
   const refresh = useRefresh()
-  const click = (e) => {
+  const click = async (e) => {
     e.stopPropagation()
-    if (!confirm(`למחוק רשומת נוכחות של ${row.person?.full_name}?`)) return
+    if (!await confirmDialog(`למחוק רשומת נוכחות של ${row.person?.full_name}?`, { danger: true, confirmText: 'מחיקה' })) return
     del('attendance', { id: row.id, previousData: row }, { onSuccess: () => refresh() })
   }
   return <button className="btn subtle sm" style={{ color: 'var(--err)', padding: '4px 7px' }} onClick={click}><Icon name="trash" size={13} /></button>

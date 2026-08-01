@@ -4,8 +4,9 @@ import { loadOptions } from '../lib/api'
 import { SCHEMA, fieldOptions } from '../lib/schema'
 import { toast } from './Toaster'
 import Modal from './Modal'
+import { promptDialog } from './Dialogs'
 
-// Generic schema-driven create form. Replaces native prompt() creation and
+// Generic schema-driven create form. Replaces native await promptDialog() creation and
 // the instant-insert quick actions. Fill fields → save → insert → onCreated(row).
 // props: { type, defaults, title, onCreated, onClose }
 export default function RecordFormModal({ type, defaults = {}, title, onCreated, onClose }) {

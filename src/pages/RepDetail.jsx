@@ -5,6 +5,7 @@ import { updateField, clearOptionsCache } from '../lib/api'
 import { PERMISSION_LEVELS, USER_TYPES, SALES_STATUS_META, ORDER_STATUS, OPP_STATUS } from '../lib/constants'
 import RecordLayout from '../components/RecordLayout'
 import EditField from '../components/EditField'
+import { alertDialog, promptDialog } from '../components/Dialogs'
 
 const permOpts = Object.entries(PERMISSION_LEVELS).map(([value, label]) => ({ value, label }))
 const typeOpts = Object.entries(USER_TYPES).map(([value, label]) => ({ value, label }))
@@ -41,15 +42,15 @@ export default function RepDetail() {
   const save = async (field, value) => { setU(x => ({ ...x, [field]: value })); await updateField('users', u, field, value); clearOptionsCache() }
   const toggleActive = async () => { const v = !u.active; setU(x => ({ ...x, active: v })); await supabase.from('users').update({ active: v }).eq('id', id); clearOptionsCache() }
   const resetPassword = async () => {
-    const password = prompt(`סיסמה חדשה עבור ${u.full_name}:`)
+    const password = await promptDialog(`סיסמה חדשה עבור ${u.full_name}:`)
     if (!password) return
-    if (password.length < 6) return alert('סיסמה חייבת להיות לפחות 6 תווים')
+    if (password.length < 6) return await alertDialog('סיסמה חייבת להיות לפחות 6 תווים')
     const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch(`${FUNCTIONS_URL}/reset-password`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({ user_id: id, password }),
     })
-    alert(res.ok ? 'הסיסמה עודכנה בהצלחה' : 'איפוס הסיסמה נכשל')
+    await alertDialog(res.ok ? 'הסיסמה עודכנה בהצלחה' : 'איפוס הסיסמה נכשל')
   }
 
   if (loading) return <div className="empty"><span className="spinner" /></div>

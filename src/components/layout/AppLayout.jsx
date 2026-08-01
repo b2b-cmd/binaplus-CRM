@@ -6,6 +6,7 @@ import ThemeToggle from './ThemeToggle'
 import GlobalSearch from '../GlobalSearch'
 import Notifications from '../Notifications'
 import Toaster from '../Toaster'
+import DialogHost from '../Dialogs'
 import { titleForPath } from './nav-data'
 
 /* App shell on the template's Sidebar/Inset primitives.
@@ -34,6 +35,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
         <Toaster />
+        <DialogHost />
       </SidebarInset>
     </SidebarProvider>
   )

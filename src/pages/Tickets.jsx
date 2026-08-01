@@ -13,6 +13,7 @@ import { Button } from '../components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Save } from 'lucide-react'
 import Icon from '../components/Icon'
+import { promptDialog } from '../components/Dialogs'
 
 export default function Tickets() {
   const nav = useNavigate()
@@ -119,7 +120,7 @@ function Cell({ row, field, mode, options, display, placeholder }) {
 function SavedViews({ views, setViews, rep }) {
   const { filterValues, setFilters } = useListContext()
   const save = async () => {
-    const name = prompt('שם התצוגה:')
+    const name = await promptDialog('שם התצוגה:')
     if (!name) return
     const { data } = await supabase.from('saved_views')
       .insert({ screen: 'tickets', name, filters: filterValues, owner: rep?.id, shared: true }).select().single()
