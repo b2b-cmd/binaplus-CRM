@@ -3,6 +3,12 @@ import { supabase } from '../lib/supabase'
 import { loadOptions } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
 import { URGENCY } from '../lib/constants'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Button } from './ui/button'
+import { Textarea } from './ui/textarea'
+import { Input } from './ui/input'
+import { Avatar, AvatarFallback } from './ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import Icon from './Icon'
 
 // local YYYY-MM-DD (avoid toISOString UTC shift that rolls the date back in +UTC zones)
@@ -81,50 +87,59 @@ export default function ActivityFeed({ objectType, recordId }) {
   const openTasks = tasks.filter(t => t.status === 'open')
 
   return (
-    <div className="card">
-      <div className="card-title"><Icon name="book" /> פעילות</div>
-      <div className="row" style={{ marginBottom: 10, gap: 8 }}>
-        <button className={`chip ${mode === 'note' ? 'active' : ''}`} onClick={() => setMode('note')}><Icon name="edit" size={13} /> הערה</button>
-        <button className={`chip ${mode === 'task' ? 'active' : ''}`} onClick={() => setMode('task')}><Icon name="calendar" size={13} /> משימה</button>
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
+        <CardTitle className="flex items-center gap-2 text-base"><Icon name="book" size={16} /> פעילות</CardTitle>
+      </CardHeader>
+      <CardContent>
+      <div className="mb-3 flex items-center gap-2">
+        <Button size="sm" variant={mode === 'note' ? 'default' : 'outline'} onClick={() => setMode('note')}><Icon name="edit" size={13} /> הערה</Button>
+        <Button size="sm" variant={mode === 'task' ? 'default' : 'outline'} onClick={() => setMode('task')}><Icon name="calendar" size={13} /> משימה</Button>
       </div>
 
-      <div className="feed-composer">
-        <textarea value={text} onChange={e => setText(e.target.value)} placeholder={mode === 'note' ? 'הוסיפו הערה…' : 'תיאור המשימה…'} />
+      <div className="bg-card focus-within:border-ring mb-4 rounded-lg border p-3 transition-colors">
+        <Textarea className="min-h-24 resize-y" value={text} onChange={e => setText(e.target.value)} placeholder={mode === 'note' ? 'הוסיפו הערה…' : 'תיאור המשימה…'} />
         {mode === 'task' && (
           <>
-            <div className="feed-date-presets">
-              {DATE_PRESETS.map(p => { const v = p.get(); return <button key={p.label} className={`date-preset ${due === v ? 'active' : ''}`} onClick={() => setDue(v)}>{p.label}</button> })}
-              <input type="date" value={due} onChange={e => setDue(e.target.value)} dir="ltr" style={{ padding: '3px 8px', fontSize: '0.78rem', width: 140 }} />
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {DATE_PRESETS.map(p => { const v = p.get(); return (
+                <Button key={p.label} size="sm" variant={due === v ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs" onClick={() => setDue(v)}>{p.label}</Button>
+              ) })}
+              <Input className="h-7 w-36 text-xs" type="date" dir="ltr" value={due} onChange={e => setDue(e.target.value)} />
             </div>
-            <div className="row wrap" style={{ marginTop: 8, gap: 8 }}>
-              <span className="small muted">דחיפות:</span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground text-xs">דחיפות:</span>
               {Object.entries(URGENCY).map(([k, u]) => (
-                <button key={k} className="urg-btn" onClick={() => setUrgency(k)}
-                  style={urgency === k ? { background: u.color, color: '#fff', borderColor: u.color } : { color: u.color }}>{u.label}</button>
+                <Button key={k} size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => setUrgency(k)}
+                  style={urgency === k ? { background: u.color, color: '#fff', borderColor: u.color } : { color: u.color }}>{u.label}</Button>
               ))}
-              <select className="input" style={{ width: 150, padding: '5px 8px', fontSize: '0.8rem' }} value={assignee} onChange={e => setAssignee(e.target.value)}>
-                <option value="">מבצע…</option>
-                {reps.map(r => <option key={r.id} value={r.id}>{r.full_name}</option>)}
-              </select>
+              <Select value={assignee || '__none__'} onValueChange={v => setAssignee(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="h-7 w-40 text-xs"><SelectValue placeholder="מבצע…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">ללא מבצע</SelectItem>
+                  {reps.map(r => <SelectItem key={r.id} value={r.id}>{r.full_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </>
         )}
-        <div className="feed-footer">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {mode === 'note' && (
-            <label className="feed-attach">
+            <label className="border-input hover:bg-accent inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-3 text-xs font-medium transition-colors">
               <Icon name="link" size={13} /> {file ? file.name : 'צרף קובץ'}
-              <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={e => setFile(e.target.files[0])} />
+              <input ref={fileRef} type="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
             </label>
           )}
-          <div className="spacer" />
-          <button className="btn sm" onClick={mode === 'note' ? addNote : addTask} disabled={busy || !text.trim()}>{busy ? <span className="spinner light" style={{ width: 14, height: 14 }} /> : 'פרסם'}</button>
+          <Button size="sm" className="ms-auto" onClick={mode === 'note' ? addNote : addTask} disabled={busy || !text.trim()}>
+            {busy ? <span className="spinner light" style={{ width: 14, height: 14 }} /> : 'פרסם'}
+          </Button>
         </div>
       </div>
 
       {openTasks.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
           {openTasks.map(t => (
-            <div key={t.id} className="feed-task" style={{ borderInlineStartColor: URGENCY[t.urgency]?.color || 'var(--mp)' }}>
+            <div key={t.id} className="bg-muted/40 flex items-center gap-2 rounded-md border-s-4 p-2" style={{ borderInlineStartColor: URGENCY[t.urgency]?.color || 'var(--mp)' }}>
               <input type="checkbox" checked={false} onChange={() => toggleTask(t)} />
               <span style={{ flex: 1, fontSize: '0.86rem', fontWeight: 600 }}>{t.title}</span>
               {t.urgency && <span className="badge" style={{ background: URGENCY[t.urgency]?.color, color: '#fff' }}>{URGENCY[t.urgency]?.label}</span>}
@@ -135,44 +150,46 @@ export default function ActivityFeed({ objectType, recordId }) {
         </div>
       )}
 
-      {topNotes.length === 0 && tasks.filter(t => t.status === 'done').length === 0 ? <div className="empty small">אין פעילות עדיין</div> : (
+      {topNotes.length === 0 && tasks.filter(t => t.status === 'done').length === 0 ? <p className="text-muted-foreground py-6 text-center text-sm">אין פעילות עדיין</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 460, overflowY: 'auto' }}>
           {topNotes.map(n => (
-            <div key={n.id} className="feed-item">
-              <div className="feed-meta">
-                <div className="avatar" style={{ width: 22, height: 22, fontSize: '0.62rem' }}>{(n.author_user?.full_name || '?').slice(0, 2)}</div>
+            <div key={n.id} className="bg-muted/30 rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Avatar className="size-6"><AvatarFallback className="bg-primary text-primary-foreground text-[0.6rem]">{(n.author_user?.full_name || '?').slice(0, 2)}</AvatarFallback></Avatar>
                 <b style={{ color: 'var(--heading)', fontSize: '0.82rem' }}>{n.author_user?.full_name || 'נציג'}</b>
-                <span className="muted small">· {new Date(n.created_at).toLocaleString('he-IL')}</span>
-                <div className="spacer" />
-                {(n.author === rep?.id || isManager) && <button className="link-btn" style={{ color: 'var(--err)' }} onClick={() => delItem(n)}><Icon name="x" size={12} /></button>}
+                <span className="text-muted-foreground text-xs">· {new Date(n.created_at).toLocaleString('he-IL')}</span>
+                {(n.author === rep?.id || isManager) && <Button variant="ghost" size="icon" className="ms-auto size-6 text-[var(--err)]" onClick={() => delItem(n)}><Icon name="x" size={12} /></Button>}
               </div>
-              {n.body && <div className="feed-body">{n.body}</div>}
+              {n.body && <div className="mt-1.5 text-sm whitespace-pre-wrap">{n.body}</div>}
               {n.file_url && <a className="small" href={n.file_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', gap: 4, marginTop: 4 }}><Icon name="link" size={12} /> קובץ מצורף</a>}
 
               {repliesOf(n.id).map(r => (
-                <div key={r.id} className="feed-reply">
-                  <div>
-                    <div className="feed-meta"><b style={{ color: 'var(--heading)', fontSize: '0.78rem' }}>{r.author_user?.full_name || 'נציג'}</b><span className="muted small">· {new Date(r.created_at).toLocaleString('he-IL')}</span>{(r.author === rep?.id || isManager) && <><div className="spacer" /><button className="link-btn" style={{ color: 'var(--err)' }} onClick={() => delItem(r)}><Icon name="x" size={11} /></button></>}</div>
-                    <div className="feed-body" style={{ fontSize: '0.82rem' }}>{r.body}</div>
+                <div key={r.id} className="border-border mt-2 border-s-2 ps-3">
+                  <div className="flex items-center gap-2">
+                    <b className="text-[0.78rem]" style={{ color: 'var(--heading)' }}>{r.author_user?.full_name || 'נציג'}</b>
+                    <span className="text-muted-foreground text-xs">· {new Date(r.created_at).toLocaleString('he-IL')}</span>
+                    {(r.author === rep?.id || isManager) && <Button variant="ghost" size="icon" className="ms-auto size-5 text-[var(--err)]" onClick={() => delItem(r)}><Icon name="x" size={11} /></Button>}
                   </div>
+                  <div className="mt-1 text-[0.82rem] whitespace-pre-wrap">{r.body}</div>
                 </div>
               ))}
 
               {replyTo === n.id ? (
-                <div className="feed-reply">
-                  <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="תגובה…" style={{ minHeight: 44, fontSize: '0.82rem' }} autoFocus />
-                  <div className="row" style={{ gap: 6 }}>
-                    <button className="btn sm" disabled={busy || !replyText.trim()} onClick={() => addReply(n)}>שלח</button>
-                    <button className="link-btn" onClick={() => { setReplyTo(null); setReplyText('') }}>ביטול</button>
+                <div className="border-border mt-2 space-y-2 border-s-2 ps-3">
+                  <Textarea className="min-h-16 text-[0.82rem]" value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="תגובה…" autoFocus />
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" disabled={busy || !replyText.trim()} onClick={() => addReply(n)}>שלח</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setReplyTo(null); setReplyText('') }}>ביטול</Button>
                   </div>
                 </div>
               ) : (
-                <button className="link-btn" style={{ marginTop: 6 }} onClick={() => { setReplyTo(n.id); setReplyText('') }}><Icon name="reply" size={13} /> השב</button>
+                <Button variant="ghost" size="sm" className="mt-1.5 h-7 px-2 text-xs" onClick={() => { setReplyTo(n.id); setReplyText('') }}><Icon name="reply" size={13} /> השב</Button>
               )}
             </div>
           ))}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -164,3 +164,11 @@
 [data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
   inset-inline-start: calc(100% - 18px);
 }
+
+/* Dark theme re-points --mp to a BRIGHT purple (#b18fe0) so it reads on dark
+   surfaces. White text on that measured 2.67:1 on every primary button, so the
+   primary foreground has to flip to a dark ink in this theme. */
+:root[data-theme="dark"] {
+  --primary-foreground: #1a1030;
+  --sidebar-primary-foreground: #1a1030;
+}
