@@ -7,7 +7,13 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Link } from 'react-router-dom'
+import HomeConfig, { useHomeCards } from '../components/HomeConfig'
 import Icon from '../components/Icon'
+
+const ICONS = { tickets: 'inbox', people: 'users', tasks: 'calendar', orders: 'money', opportunities: 'tag',
+  payments: 'money', products: 'grid', cycles: 'calendar', lessons: 'book', attendance: 'users',
+  knowledge_base: 'book', users: 'shield', settings: 'cog' }
 
 function Kpi({ label, value, sub, icon }) {
   return (
@@ -29,6 +35,7 @@ function Kpi({ label, value, sub, icon }) {
 }
 
 export default function Dashboard() {
+  const homeCards = useHomeCards()
   const [tab, setTab] = useState('service')
   const [tickets, setTickets] = useState([])
   const [people, setPeople] = useState([])
@@ -81,9 +88,25 @@ export default function Dashboard() {
 
   return (
     <div>
+      {/* Per-user shortcuts. Order and selection come from users.prefs.home, and
+          anything the user may not open is filtered out. */}
+      {homeCards.length > 0 && (
+        <div className="mb-4 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
+          {homeCards.map(c => (
+            <Link key={c.key} to={c.path}
+              className="bg-card hover:border-primary/60 hover:bg-accent/40 flex items-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors">
+              <Icon name={ICONS[c.key] || 'grid'} size={16} />
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button size="sm" variant={tab === 'service' ? 'default' : 'outline'} onClick={() => setTab('service')}>שירות</Button>
         <Button size="sm" variant={tab === 'sales' ? 'default' : 'outline'} onClick={() => setTab('sales')}>מכירות</Button>
+        <div className="grow" />
+        <HomeConfig />
       </div>
 
       <Card className="mb-4 py-3">

@@ -6,44 +6,45 @@ export const NAV_GROUPS = [
   {
     title: null,
     items: [
-      { path: '/', label: 'דשבורד', icon: 'grid', end: true },
-      { path: '/tickets', label: 'פניות שירות', icon: 'inbox' },
-      { path: '/tasks', label: 'המשימות שלי', icon: 'calendar' },
+      { path: '/', label: 'דשבורד', icon: 'grid', resource: 'dashboard', end: true },
+      { path: '/tickets', label: 'פניות שירות', icon: 'inbox', resource: 'tickets' },
+      { path: '/tasks', label: 'המשימות שלי', icon: 'calendar', resource: 'tasks' },
     ],
   },
   {
     title: 'מכירות',
     items: [
-      { path: '/people', label: 'לידים / תלמידים', icon: 'users' },
-      { path: '/opportunities', label: 'הזדמנויות', icon: 'tag' },
-      { path: '/orders', label: 'הזמנות', icon: 'money' },
-      { path: '/payments', label: 'תשלומים', icon: 'money' },
+      { path: '/people', label: 'לידים / תלמידים', icon: 'users', resource: 'people' },
+      { path: '/opportunities', label: 'הזדמנויות', icon: 'tag', resource: 'opportunities' },
+      { path: '/orders', label: 'הזמנות', icon: 'money', resource: 'orders' },
+      { path: '/payments', label: 'תשלומים', icon: 'money', resource: 'payments' },
     ],
   },
   {
     title: 'קטלוג',
     items: [
-      { path: '/products', label: 'מוצרים', icon: 'grid' },
-      { path: '/cycles', label: 'מחזורים', icon: 'calendar' },
-      { path: '/lessons', label: 'שיעורים', icon: 'book' },
-      { path: '/attendance', label: 'נוכחות', icon: 'users' },
+      { path: '/products', label: 'מוצרים', icon: 'grid', resource: 'products' },
+      { path: '/cycles', label: 'מחזורים', icon: 'calendar', resource: 'cycles' },
+      { path: '/lessons', label: 'שיעורים', icon: 'book', resource: 'lessons' },
+      { path: '/attendance', label: 'נוכחות', icon: 'users', resource: 'attendance' },
     ],
   },
   {
     title: 'ידע',
     items: [
-      { path: '/knowledge', label: 'מאגר ידע', icon: 'book' },
-      { path: '/guide', label: 'מדריך שימוש', icon: 'help' },
+      { path: '/knowledge', label: 'מאגר ידע', icon: 'book', resource: 'knowledge_base' },
+      { path: '/guide', label: 'מדריך שימוש', icon: 'help', resource: 'guide' },
     ],
   },
   {
     title: 'ניהול',
     managerOnly: true,
     items: [
-      { path: '/reps', label: 'נציגים והרשאות', icon: 'shield' },
-      { path: '/duplicates', label: 'מיזוג כפילויות', icon: 'users' },
-      { path: '/api-docs', label: 'API / דוקומנטציה', icon: 'book' },
-      { path: '/settings', label: 'הגדרות', icon: 'cog' },
+      { path: '/reps', label: 'נציגים', icon: 'shield', resource: 'users' },
+      { path: '/permissions', label: 'הרשאות', icon: 'shield', resource: 'users' },
+      { path: '/duplicates', label: 'מיזוג כפילויות', icon: 'users', resource: 'users' },
+      { path: '/api-docs', label: 'API / דוקומנטציה', icon: 'book', resource: 'settings' },
+      { path: '/settings', label: 'הגדרות', icon: 'cog', resource: 'settings' },
     ],
   },
 ]
@@ -60,6 +61,7 @@ export const DETAIL_TITLES = [
   ['/lessons/', 'שיעור'],
   ['/modules/', 'מודול'],
   ['/reps/', 'נציג'],
+  ['/permissions', 'הרשאות'],
 ]
 
 export const USER_TYPE_LABEL = { sales: 'מכירות', service: 'שירות', general_manager: 'מנהל' }
