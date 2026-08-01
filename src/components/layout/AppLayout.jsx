@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '../ui/sidebar'
 import { Separator } from '../ui/separator'
 import AppSidebar from './AppSidebar'
 import ThemeToggle from './ThemeToggle'
+import ImpersonationBar from './ImpersonationBar'
 import GlobalSearch from '../GlobalSearch'
 import Notifications from '../Notifications'
 import Toaster from '../Toaster'
@@ -21,6 +22,7 @@ export default function AppLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="min-w-0 overflow-x-hidden">
+        <ImpersonationBar />
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
           <SidebarTrigger className="-ms-1" />
           <Separator orientation="vertical" className="me-1 h-5" />
@@ -28,6 +30,7 @@ export default function AppLayout() {
           <div className="ms-auto flex items-center gap-2">
             <GlobalSearch />
             <Notifications />
+            <ImpersonationBar />
             <ThemeToggle />
           </div>
         </header>

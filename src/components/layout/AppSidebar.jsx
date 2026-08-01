@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar'
 import Icon from '../Icon'
 import Logo from '../Logo'
 import { NAV_GROUPS, USER_TYPE_LABEL } from './nav-data'
+import { usePermissionStore } from '../../stores/permissionStore'
 
 const initials = (name = '') =>
   name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('') || '?'
@@ -20,6 +21,7 @@ const initials = (name = '') =>
 export default function AppSidebar() {
   const { user, rep, signOut, isManager } = useAuthStore()
   const { isMobile, setOpenMobile } = useSidebar()
+  const can = usePermissionStore(s => s.can)
   const loc = useLocation()
   const manager = isManager()
   const name = rep?.full_name || user?.email
@@ -39,7 +41,14 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {NAV_GROUPS.filter(g => !g.managerOnly || manager).map((group, i) => (
+        {/* A group disappears entirely once every item in it is hidden, so a
+            sales rep does not see an empty "ידע" heading. `guide` has no
+            permission row - it is help text everyone may read. */}
+        {NAV_GROUPS
+          .filter(g => !g.managerOnly || manager)
+          .map(g => ({ ...g, items: g.items.filter(i => !i.resource || i.resource === 'guide' || can(i.resource, 'view')) }))
+          .filter(g => g.items.length)
+          .map((group, i) => (
           <SidebarGroup key={group.title ?? i}>
             {group.title && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
             <SidebarGroupContent>
