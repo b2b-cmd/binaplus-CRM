@@ -5,9 +5,11 @@ import type { RaRecord, UseBulkDeleteControllerParams } from "ra-core";
 import {
   useBulkDeleteController,
   useGetResourceLabel,
+  useListContext,
   useResourceContext,
   useResourceTranslation,
 } from "ra-core";
+import { confirmDialog } from "@/components/Dialogs";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -48,6 +50,7 @@ export const BulkDeleteButton = <
 }: BulkDeleteButtonProps<RecordType, MutationOptionsError>) => {
   const { handleDelete, isPending } = useBulkDeleteController(props);
   const resource = useResourceContext(props);
+  const { selectedIds } = useListContext();
   const getResourceLabel = useGetResourceLabel();
   const label = useResourceTranslation({
     resourceI18nKey: resource
@@ -60,11 +63,25 @@ export const BulkDeleteButton = <
     userText: labelProp,
   });
 
+  /* Deleting many records at once fired straight from the click with no
+     confirmation, so one stray press wiped the whole selection. Always ask,
+     and say exactly how many rows are about to go. */
+  const confirmThenDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    const n = selectedIds?.length ?? 0;
+    const ok = await confirmDialog(
+      n === 1
+        ? "למחוק את הרשומה שנבחרה?"
+        : `למחוק ${n} רשומות שנבחרו?`,
+      { title: "אישור מחיקה", confirmText: "מחיקה", danger: true },
+    );
+    if (ok) handleDelete(event);
+  };
+
   return (
     <Button
       variant="destructive"
       type="button"
-      onClick={handleDelete}
+      onClick={confirmThenDelete}
       disabled={isPending}
       aria-label={typeof label === "string" ? label : undefined}
       className={cn("h-9", className)}

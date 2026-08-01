@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Camera, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { clearOptionsCache } from '../lib/api'
@@ -7,6 +7,7 @@ import { Card, CardContent } from './ui/card'
 import UserAvatar from './UserAvatar'
 import { toast } from './Toaster'
 import { confirmDialog } from './Dialogs'
+import ImageCropDialog from './ImageCropDialog'
 
 const MAX_BYTES = 4 * 1024 * 1024
 
@@ -15,18 +16,35 @@ const MAX_BYTES = 4 * 1024 * 1024
 export default function AvatarUpload({ user, onChange }) {
   const fileRef = useRef()
   const [busy, setBusy] = useState(false)
+  const [src, setSrc] = useState(null)   // object URL of the image being cropped
 
-  const pick = async (e) => {
+  useEffect(() => () => { if (src) URL.revokeObjectURL(src) }, [src])
+
+  /* Picking a file does not upload it: it opens the crop dialog first, so the
+     user decides which square becomes the avatar. Object URLs are revoked on
+     unmount to avoid leaking the preview blob. */
+  const pick = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) { toast('יש לבחור קובץ תמונה', 'err'); return }
     if (file.size > MAX_BYTES) { toast('התמונה גדולה מדי (מקסימום 4MB)', 'err'); return }
+    setSrc(URL.createObjectURL(file))
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
+  const closeCrop = () => {
+    if (src) URL.revokeObjectURL(src)
+    setSrc(null)
+  }
+
+  const saveCropped = async (blob) => {
     setBusy(true)
     try {
-      const ext = (file.name.match(/\.[a-z0-9]{1,8}$/i) || ['.jpg'])[0]
-      const path = `avatars/${user.id}/${Date.now()}${ext}`
-      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file)
+      // Always .jpg: the cropper re-encodes to a fixed-size JPEG regardless of
+      // what was uploaded, so the extension must match the actual content.
+      const path = `avatars/${user.id}/${Date.now()}.jpg`
+      const { error: upErr } = await supabase.storage.from('attachments')
+        .upload(path, blob, { contentType: 'image/jpeg' })
       if (upErr) throw new Error(upErr.message)
       const url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl
       const { error } = await supabase.from('users').update({ avatar_url: url }).eq('id', user.id)
@@ -34,11 +52,11 @@ export default function AvatarUpload({ user, onChange }) {
       clearOptionsCache()
       onChange?.(url)
       toast('תמונת הפרופיל עודכנה')
+      closeCrop()
     } catch (err) {
       toast(`העלאת התמונה נכשלה: ${err.message || ''}`, 'err')
     } finally {
       setBusy(false)
-      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -75,6 +93,9 @@ export default function AvatarUpload({ user, onChange }) {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pick} />
         </div>
       </CardContent>
+      {src && (
+        <ImageCropDialog open src={src} busy={busy} onClose={closeCrop} onCropped={saveCropped} />
+      )}
     </Card>
   )
 }
