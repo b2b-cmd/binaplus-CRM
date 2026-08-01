@@ -1,5 +1,10 @@
 import { useRef, useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
+import { Card, CardContent } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Alert, AlertDescription } from '../components/ui/alert'
 import Logo from '../components/Logo'
 import Icon from '../components/Icon'
 
@@ -22,31 +27,49 @@ export default function LoginPage() {
 
   return (
     <div className="center-screen">
-      <div className="card" style={{ width: '100%', maxWidth: 400, boxShadow: 'var(--sh3)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <div style={{ marginBottom: 10 }}><Logo size={2.6} /></div>
-          <p className="muted small">מערכת ניהול פניות ולידים</p>
-        </div>
-        <form onSubmit={submit}>
-          <div className="field">
-            <label>כתובת מייל</label>
-            <input type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@bina-plus.co.il" autoComplete="username" required />
+      <Card className="w-full max-w-sm shadow-2xl">
+        <CardContent className="pt-2">
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <Logo size={2.6} />
+            <p className="text-muted-foreground text-sm">מערכת ניהול פניות ולידים</p>
           </div>
-          <div className="field">
-            <label>סיסמה</label>
-            <div style={{ position: 'relative' }}>
-              <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required style={{ paddingInlineEnd: 40 }} />
-              <button type="button" onClick={() => setShowPass(s => !s)} title={showPass ? 'הסתר סיסמה' : 'הצג סיסמה'}
-                style={{ position: 'absolute', insetInlineEnd: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-3)', display: 'flex', padding: 4 }}>
-                <Icon name={showPass ? 'eye-off' : 'eye'} size={18} />
-              </button>
+
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">כתובת מייל</Label>
+              <Input id="email" type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="name@bina-plus.co.il" autoComplete="username" required />
             </div>
-          </div>
-          {error && <div className="badge err" style={{ width: '100%', justifyContent: 'center', marginBottom: 12 }}>{error}</div>}
-          <button type="submit" className="btn block" disabled={busy} onClick={doLogin}>{busy ? <span className="spinner light" style={{ width: 18, height: 18 }} /> : 'התחברות'}</button>
-        </form>
-        <p className="muted small" style={{ textAlign: 'center', marginTop: 16 }}>גישה לנציגים רשומים בלבד</p>
-      </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password">סיסמה</Label>
+              <div className="relative">
+                <Input id="password" className="pe-10" type={showPass ? 'text' : 'password'} value={password}
+                  onChange={e => setPassword(e.target.value)} autoComplete="current-password" required />
+                <Button type="button" variant="ghost" size="icon"
+                  className="text-muted-foreground absolute end-1 top-1/2 size-8 -translate-y-1/2"
+                  onClick={() => setShowPass(s => !s)}
+                  title={showPass ? 'הסתר סיסמה' : 'הצג סיסמה'}
+                  aria-label={showPass ? 'הסתר סיסמה' : 'הצג סיסמה'}>
+                  <Icon name={showPass ? 'eye-off' : 'eye'} size={18} />
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button type="submit" className="w-full" disabled={busy} onClick={doLogin}>
+              {busy ? <span className="spinner light" style={{ width: 18, height: 18 }} /> : 'התחברות'}
+            </Button>
+          </form>
+
+          <p className="text-muted-foreground mt-5 text-center text-xs">גישה לנציגים רשומים בלבד</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
